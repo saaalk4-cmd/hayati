@@ -16,7 +16,8 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.hayati.hayati"
-    compileSdk = flutter.compileSdkVersion
+    // androidx.core 1.19 محتاجة compileSdk 37 أو أحدث
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
