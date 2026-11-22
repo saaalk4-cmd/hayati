@@ -146,14 +146,19 @@ final journalProvider = StreamProvider<List<JournalEntry>>(
 List<(String, JournalEntry)> onThisDay(List<JournalEntry> all, DateTime today) {
   String key(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
-  final targets = <String, String>{
-    key(DateTime(today.year, today.month - 1, today.day)): 'من شهر',
-    key(DateTime(today.year, today.month - 6, today.day)): 'من 6 شهور',
-  };
+  final targets = <String, String>{};
+  void add(DateTime d, String label) {
+    // DateTime بيعدّي الشهر لو اليوم مش موجود (31 فبراير = 3 مارس)، فنتجاهله
+    if (d.day == today.day) targets[key(d)] = label;
+  }
+
+  add(DateTime(today.year, today.month - 1, today.day), 'من شهر');
+  add(DateTime(today.year, today.month - 6, today.day), 'من 6 شهور');
   for (var y = 1; y <= 5; y++) {
-    targets[key(DateTime(today.year - y, today.month, today.day))] = y == 1
-        ? 'من سنة'
-        : 'من $y سنين';
+    add(
+      DateTime(today.year - y, today.month, today.day),
+      y == 1 ? 'من سنة' : 'من $y سنين',
+    );
   }
   return [
     for (final e in all)

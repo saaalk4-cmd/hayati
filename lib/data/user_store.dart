@@ -67,9 +67,30 @@ class LocalUserStore implements UserStore {
   @override
   Future<void> merge(String c, String d, Map<String, dynamic> data) async {
     final key = _key(c, d);
-    await prefs.setString(key, jsonEncode({...?_read(key), ...data}));
+    await prefs.setString(key, jsonEncode(deepMerge(_read(key) ?? {}, data)));
     _changes.add(key);
   }
+}
+
+/// دمج عميق زي Firestore merge: الخرايط المتداخلة بتتدمج مش بتتستبدل
+/// (مثلًا سجل القرآن {اليوم: صفحات} بيحتفظ بالأيام القديمة)
+Map<String, dynamic> deepMerge(
+  Map<String, dynamic> base,
+  Map<String, dynamic> update,
+) {
+  final out = {...base};
+  for (final e in update.entries) {
+    final old = out[e.key];
+    if (old is Map && e.value is Map) {
+      out[e.key] = deepMerge(
+        old.cast<String, dynamic>(),
+        (e.value as Map).cast<String, dynamic>(),
+      );
+    } else {
+      out[e.key] = e.value;
+    }
+  }
+  return out;
 }
 
 final userStoreProvider = Provider<UserStore>((ref) {

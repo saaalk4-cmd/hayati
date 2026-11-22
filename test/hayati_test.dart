@@ -10,6 +10,7 @@ import 'package:hayati/features/lock/pin_pad.dart';
 import 'package:hayati/features/money/money_models.dart';
 import 'package:hayati/features/onboarding/onboarding_screen.dart';
 import 'package:hayati/data/session.dart';
+import 'package:hayati/data/user_store.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hayati/features/stats/stats.dart';
 import 'package:hayati/features/reminders/smart_reminders.dart';
@@ -461,5 +462,22 @@ void main() {
       expect(text, contains('2 مهام'));
       expect(text, contains('5,000'));
     });
+  });
+
+  test('local store deep merge keeps nested history', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = LocalUserStore(await SharedPreferences.getInstance());
+    await store.merge('quran', 'progress', {
+      'page': 10,
+      'log': {'2026-11-21': 4},
+    });
+    await store.merge('quran', 'progress', {
+      'page': 13,
+      'log': {'2026-11-22': 3},
+    });
+    final d = await store.get('quran', 'progress');
+    expect(d!['page'], 13);
+    expect(d['log'], {'2026-11-21': 4, '2026-11-22': 3});
+    expect(deepMerge({'a': 1}, {'b': 2}), {'a': 1, 'b': 2});
   });
 }
