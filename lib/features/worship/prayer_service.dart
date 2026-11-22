@@ -1,8 +1,8 @@
 import 'package:adhan/adhan.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import 'prayer_settings.dart';
+import '../../core/utils/date_utils.dart';
 
 enum PrayerName { fajr, dhuhr, asr, maghrib, isha }
 
@@ -56,7 +56,7 @@ NextPrayer nextPrayer(PrayerSettings s, DateTime now) {
   return NextPrayer(PrayerName.fajr, tomorrow[PrayerName.fajr]);
 }
 
-String formatPrayerTime(DateTime t) => DateFormat('h:mm a', 'ar').format(t);
+String formatPrayerTime(DateTime t) => arFormat('h:mm a', t);
 
 String formatCountdown(Duration d) {
   final h = d.inHours;

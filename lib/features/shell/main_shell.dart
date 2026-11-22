@@ -16,8 +16,8 @@ class MainShell extends StatelessWidget {
             shell.goBranch(i, initialLocation: i == shell.currentIndex),
         destinations: const [
           NavigationDestination(
-            icon: Icon(Icons.wb_sunny_outlined),
-            selectedIcon: Icon(Icons.wb_sunny),
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
             label: 'يومي',
           ),
           NavigationDestination(
@@ -26,8 +26,8 @@ class MainShell extends StatelessWidget {
             label: 'عباداتي',
           ),
           NavigationDestination(
-            icon: Icon(Icons.check_circle_outline),
-            selectedIcon: Icon(Icons.check_circle),
+            icon: Icon(Icons.checklist_rtl),
+            selectedIcon: Icon(Icons.checklist_rtl),
             label: 'مهامي',
           ),
           NavigationDestination(
@@ -36,8 +36,8 @@ class MainShell extends StatelessWidget {
             label: 'فلوسي',
           ),
           NavigationDestination(
-            icon: Icon(Icons.grid_view_outlined),
-            selectedIcon: Icon(Icons.grid_view_rounded),
+            icon: Icon(Icons.more_horiz),
+            selectedIcon: Icon(Icons.more_horiz),
             label: 'المزيد',
           ),
         ],

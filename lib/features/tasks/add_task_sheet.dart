@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/notifications.dart';
@@ -76,7 +75,7 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
     if (key == HayatiDates.dayKey(today.add(const Duration(days: 1)))) {
       return 'بكرة';
     }
-    return DateFormat('EEEE d MMMM', 'ar').format(d);
+    return arFormat('EEEE d MMMM', d);
   }
 
   @override

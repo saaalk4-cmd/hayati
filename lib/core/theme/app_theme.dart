@@ -4,6 +4,10 @@ import 'package:material_ui/material_ui.dart';
 import 'app_colors.dart';
 
 class AppTheme {
+  /// بيتقفل في سكريبت لقطات الشاشة (مفيش إنترنت لتحميل الخط)
+  static bool useGoogleFonts = true;
+  static String? fallbackFontFamily;
+
   static ThemeData light() => _build(
     ColorScheme.fromSeed(
       seedColor: AppColors.emerald700,
@@ -40,7 +44,9 @@ class AppTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: scheme.surface,
     );
-    final text = GoogleFonts.cairoTextTheme(base.textTheme);
+    final text = useGoogleFonts
+        ? GoogleFonts.cairoTextTheme(base.textTheme)
+        : base.textTheme.apply(fontFamily: fallbackFontFamily);
     return base.copyWith(
       textTheme: text,
       appBarTheme: AppBarTheme(

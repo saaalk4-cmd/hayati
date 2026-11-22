@@ -2,6 +2,8 @@ analyzer:
   exclude:
     - build/**
     - android/**
+    # سكريبت لقطات الشاشة (بيتشغل يدوي)
+    - test_screens/**
 include: package:flutter_lints/flutter.yaml
 
 linter:

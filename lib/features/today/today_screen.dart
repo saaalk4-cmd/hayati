@@ -66,10 +66,16 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final text = Theme.of(context).textTheme;
 
     return Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
+        elevation: 4,
+        shape: const StadiumBorder(),
         onPressed: () => context.push('/assistant'),
         icon: const Icon(Icons.auto_awesome),
-        label: const Text('اسأل حياتي'),
+        label: const Text(
+          'اسأل حياتي',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
       ),
       body: SafeArea(
         child: ListView(
@@ -226,39 +232,116 @@ class _PrayersRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final log = ref.watch(todayPrayerLogProvider);
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () => context.go('/worship'),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              for (final p in PrayerName.values)
-                Column(
-                  children: [
-                    Icon(
-                      log[p] == null
-                          ? Icons.radio_button_unchecked
-                          : log[p] == PrayerStatus.missed
-                          ? Icons.cancel
-                          : Icons.check_circle,
-                      color: log[p] == null
-                          ? scheme.outline
-                          : log[p] == PrayerStatus.missed
-                          ? scheme.error
-                          : scheme.primary,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(p.ar, style: Theme.of(context).textTheme.labelMedium),
-                  ],
-                ),
-            ],
-          ),
+    final next = ref.watch(nextPrayerProvider);
+    final now = ref.watch(minuteClockProvider).value ?? DateTime.now();
+    final nextIsToday = next.time.day == now.day;
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
+      onTap: () => context.go('/worship'),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            for (final p in PrayerName.values)
+              PrayerDot(
+                prayer: p,
+                status: log[p],
+                isNext: nextIsToday && next.name == p,
+              ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+/// دايرة صلاة بأيقونتها: متعلّم عليها ✓، أو الجاية (ذهبي)، أو لسه
+class PrayerDot extends StatelessWidget {
+  const PrayerDot({
+    super.key,
+    required this.prayer,
+    required this.status,
+    required this.isNext,
+  });
+
+  final PrayerName prayer;
+  final PrayerStatus? status;
+  final bool isNext;
+
+  static const _icons = {
+    PrayerName.fajr: Icons.wb_twilight,
+    PrayerName.dhuhr: Icons.wb_sunny_outlined,
+    PrayerName.asr: Icons.light_mode_outlined,
+    PrayerName.maghrib: Icons.wb_twilight_outlined,
+    PrayerName.isha: Icons.nights_stay_outlined,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final done = status != null && status != PrayerStatus.missed;
+    final missed = status == PrayerStatus.missed;
+    final ring = isNext
+        ? AppColors.gold500
+        : done
+        ? AppColors.emerald500
+        : missed
+        ? scheme.error
+        : scheme.outlineVariant;
+    return Column(
+      children: [
+        Container(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Theme.of(context).cardTheme.color,
+            border: Border.all(color: ring, width: isNext ? 3 : 2),
+            boxShadow: isNext
+                ? [
+                    BoxShadow(
+                      color: AppColors.gold500.withValues(alpha: 0.35),
+                      blurRadius: 12,
+                    ),
+                  ]
+                : null,
+          ),
+          child: Icon(
+            done
+                ? Icons.check
+                : missed
+                ? Icons.close
+                : isNext
+                ? Icons.schedule
+                : _icons[prayer],
+            color: done
+                ? AppColors.emerald500
+                : missed
+                ? scheme.error
+                : isNext
+                ? AppColors.gold700
+                : scheme.outline,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          prayer.ar,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontWeight: isNext ? FontWeight.w800 : FontWeight.w600,
+          ),
+        ),
+        if (isNext)
+          Container(
+            margin: const EdgeInsets.only(top: 3),
+            width: 5,
+            height: 5,
+            decoration: const BoxDecoration(
+              color: AppColors.gold500,
+              shape: BoxShape.circle,
+            ),
+          ),
+      ],
     );
   }
 }

@@ -184,7 +184,7 @@ class NextPrayerHero extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.mosque, color: AppColors.gold500, size: 40),
+          const _CrescentMark(),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -225,33 +225,72 @@ class PrayerChecklist extends ConsumerWidget {
     final now = ref.watch(minuteClockProvider).value ?? DateTime.now();
     final scheme = Theme.of(context).colorScheme;
 
+    final next = ref.watch(nextPrayerProvider);
+    final nextToday = next.time.day == now.day ? next.name : null;
     return Card(
-      child: Column(
-        children: [
-          for (final p in PrayerName.values)
-            ListTile(
-              leading: Icon(
-                log[p] == null
-                    ? Icons.radio_button_unchecked
-                    : log[p] == PrayerStatus.missed
-                    ? Icons.cancel
-                    : Icons.check_circle,
-                color: log[p] == null
-                    ? scheme.outline
-                    : log[p] == PrayerStatus.missed
-                    ? scheme.error
-                    : scheme.primary,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          children: [
+            for (final p in PrayerName.values)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: p == nextToday
+                      ? Border.all(color: AppColors.gold500, width: 1.5)
+                      : null,
+                  color: p == nextToday
+                      ? AppColors.gold500.withValues(alpha: 0.06)
+                      : null,
+                ),
+                child: ListTile(
+                  title: Text(
+                    p.ar,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                  subtitle: Text(formatPrayerTime(times[p])),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        log[p]?.ar ?? (p == nextToday ? 'قادمة' : '—'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: log[p] == null
+                              ? (p == nextToday
+                                    ? AppColors.gold700
+                                    : scheme.outline)
+                              : log[p] == PrayerStatus.missed
+                              ? scheme.error
+                              : AppColors.emerald500,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        log[p] == null
+                            ? (p == nextToday
+                                  ? Icons.schedule
+                                  : Icons.radio_button_unchecked)
+                            : log[p] == PrayerStatus.missed
+                            ? Icons.cancel_outlined
+                            : Icons.check_circle_outline,
+                        color: log[p] == null
+                            ? (p == nextToday
+                                  ? AppColors.gold700
+                                  : scheme.outline)
+                            : log[p] == PrayerStatus.missed
+                            ? scheme.error
+                            : AppColors.emerald500,
+                      ),
+                    ],
+                  ),
+                  enabled: !times[p].isAfter(now) || log[p] != null,
+                  onTap: () => _pick(context, ref, p),
+                ),
               ),
-              title: Text(
-                p.ar,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-              subtitle: log[p] == null ? null : Text(log[p]!.ar),
-              trailing: Text(formatPrayerTime(times[p])),
-              enabled: !times[p].isAfter(now) || log[p] != null,
-              onTap: () => _pick(context, ref, p),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -279,5 +318,39 @@ class PrayerChecklist extends ConsumerWidget {
     );
     if (choice == null) return;
     await logPrayer(ref, day, p, choice is PrayerStatus ? choice : null);
+  }
+}
+
+/// هلال ذهبي ونجمتين (نفس روح شعار التطبيق وتصميم Canva)
+class _CrescentMark extends StatelessWidget {
+  const _CrescentMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: 56,
+      height: 56,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Icon(
+              Icons.nightlight_round,
+              color: AppColors.gold500,
+              size: 48,
+            ),
+          ),
+          Positioned(
+            top: 2,
+            left: 2,
+            child: Icon(Icons.star_rounded, color: AppColors.gold200, size: 14),
+          ),
+          Positioned(
+            top: 16,
+            left: 0,
+            child: Icon(Icons.star_rounded, color: AppColors.gold200, size: 9),
+          ),
+        ],
+      ),
+    );
   }
 }

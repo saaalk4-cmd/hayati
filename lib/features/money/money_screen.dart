@@ -7,6 +7,7 @@ import '../../core/theme/app_colors.dart';
 import 'add_transaction_sheet.dart';
 import 'money_models.dart';
 import 'money_repository.dart';
+import '../../core/utils/date_utils.dart';
 
 String monthKey(DateTime d) => DateFormat('yyyy-MM').format(d);
 
@@ -61,7 +62,7 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
                     icon: const Icon(Icons.chevron_right),
                   ),
                   Text(
-                    DateFormat('MMMM y', 'ar').format(_month),
+                    arFormat('MMMM y', _month),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   IconButton(
@@ -112,7 +113,7 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
             child: Text(
-              DateFormat('EEEE d MMMM', 'ar').format(DateTime.parse(t.date)),
+              arFormat('EEEE d MMMM', DateTime.parse(t.date)),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w700,

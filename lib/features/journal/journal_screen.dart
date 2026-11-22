@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/theme/app_colors.dart';
@@ -126,10 +125,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
                       style: const TextStyle(fontSize: 28),
                     ),
                     title: Text(
-                      DateFormat(
-                        'EEEE d MMMM y',
-                        'ar',
-                      ).format(DateTime.parse(e.day)),
+                      arFormat('EEEE d MMMM y', DateTime.parse(e.day)),
                     ),
                     subtitle: Text(
                       e.text.isEmpty ? e.gratitude : e.text,
@@ -209,7 +205,7 @@ class _MoodWeek extends StatelessWidget {
                             style: const TextStyle(fontSize: 24),
                           ),
                           Text(
-                            DateFormat('E', 'ar').format(d),
+                            arFormat('E', d),
                             style: Theme.of(context).textTheme.labelSmall,
                           ),
                         ],

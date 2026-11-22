@@ -1,6 +1,20 @@
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
 
+/// تنسيق تاريخ/وقت بالعربي بأرقام 0-9 (زي تصميم التطبيق) بدل ٠-٩
+String arFormat(String pattern, DateTime d) =>
+    latinDigits(DateFormat(pattern, 'ar').format(d));
+
+String latinDigits(String s) {
+  const ar = '٠١٢٣٤٥٦٧٨٩';
+  final b = StringBuffer();
+  for (final ch in s.split('')) {
+    final i = ar.indexOf(ch);
+    b.write(i >= 0 ? '$i' : ch);
+  }
+  return b.toString();
+}
+
 class HayatiDates {
   static String greeting(DateTime now) {
     final h = now.hour;
@@ -9,8 +23,7 @@ class HayatiDates {
     return 'مساء الخير';
   }
 
-  static String gregorian(DateTime d) =>
-      DateFormat('EEEE، d MMMM y', 'ar').format(d);
+  static String gregorian(DateTime d) => arFormat('EEEE، d MMMM y', d);
 
   static String hijri(DateTime d) {
     HijriCalendar.setLocal('ar');

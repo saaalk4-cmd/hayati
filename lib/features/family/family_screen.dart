@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/notifications.dart';
 import '../../core/theme/app_colors.dart';
 import 'family_models.dart';
+import '../../core/utils/date_utils.dart';
 
 class FamilyScreen extends ConsumerWidget {
   const FamilyScreen({super.key});
@@ -69,7 +69,7 @@ class _OccasionsTab extends ConsumerWidget {
             ),
             subtitle: Text(
               [
-                DateFormat('d MMMM', 'ar').format(o.nextDate(now)),
+                arFormat('d MMMM', o.nextDate(now)),
                 if (years != null && years > 0)
                   o.type == OccasionType.birthday
                       ? 'هيكمّل $years سنة'
@@ -257,9 +257,7 @@ Future<void> _addOccasion(BuildContext context, WidgetRef ref) async {
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.event),
               title: Text(
-                date == null
-                    ? 'اختار التاريخ'
-                    : DateFormat('d MMMM', 'ar').format(date!),
+                date == null ? 'اختار التاريخ' : arFormat('d MMMM', date!),
               ),
               onTap: () async {
                 final now = DateTime.now();

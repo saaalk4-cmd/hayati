@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'journal_repository.dart';
+import '../../core/utils/date_utils.dart';
 
 class JournalEditorScreen extends ConsumerStatefulWidget {
   const JournalEditorScreen({super.key, required this.day});
@@ -72,9 +72,7 @@ class _State extends ConsumerState<JournalEditorScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          DateFormat('EEEE d MMMM', 'ar').format(DateTime.parse(widget.day)),
-        ),
+        title: Text(arFormat('EEEE d MMMM', DateTime.parse(widget.day))),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

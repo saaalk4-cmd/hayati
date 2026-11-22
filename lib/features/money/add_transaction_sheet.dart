@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/utils/date_utils.dart';
@@ -136,7 +135,7 @@ class _State extends ConsumerState<_AddTransactionSheet> {
               title: Text(
                 HayatiDates.dayKey(_date) == HayatiDates.dayKey(DateTime.now())
                     ? 'النهارده'
-                    : DateFormat('EEEE d MMMM', 'ar').format(_date),
+                    : arFormat('EEEE d MMMM', _date),
               ),
               onTap: () async {
                 final now = DateTime.now();

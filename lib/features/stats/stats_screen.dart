@@ -1,12 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../money/money_models.dart';
 import 'stats.dart';
+import '../../core/utils/date_utils.dart';
 
 class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
@@ -109,7 +109,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                                   if (s.days.length <= 7) ...[
                                     const SizedBox(height: 4),
                                     Text(
-                                      DateFormat('E', 'ar').format(s.days[i]),
+                                      arFormat('E', s.days[i]),
                                       style: text.labelSmall,
                                     ),
                                   ],
