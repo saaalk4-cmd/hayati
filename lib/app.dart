@@ -7,6 +7,8 @@ import 'data/session.dart';
 import 'data/settings.dart';
 import 'features/lock/lock_screen.dart';
 import 'features/lock/lock_service.dart';
+import 'features/worship/adhan_notifications.dart';
+import 'features/worship/prayer_settings.dart';
 
 class HayatiApp extends ConsumerStatefulWidget {
   const HayatiApp({super.key});
@@ -21,6 +23,10 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // جدولة إشعارات الأذان للأيام الجاية
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AdhanNotifications.instance.reschedule(ref.read(prayerSettingsProvider));
+    });
   }
 
   @override
@@ -33,7 +39,10 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final lock = ref.read(lockProvider.notifier);
     if (state == AppLifecycleState.paused) lock.onPaused();
-    if (state == AppLifecycleState.resumed) lock.onResumed();
+    if (state == AppLifecycleState.resumed) {
+      lock.onResumed();
+      AdhanNotifications.instance.reschedule(ref.read(prayerSettingsProvider));
+    }
   }
 
   @override
@@ -42,6 +51,8 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
     final mode = ref.watch(themeModeProvider);
     final locked = ref.watch(lockProvider.select((s) => s.locked));
     final session = ref.watch(sessionProvider);
+    ref.listen(prayerSettingsProvider,
+        (_, next) => AdhanNotifications.instance.reschedule(next));
 
     return MaterialApp.router(
       title: 'حياتي',

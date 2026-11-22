@@ -10,6 +10,11 @@ import '../../features/placeholder/coming_soon_screen.dart';
 import '../../features/shell/main_shell.dart';
 import '../../features/tasks/tasks_screen.dart';
 import '../../features/today/today_screen.dart';
+import '../../features/worship/adhkar_screen.dart';
+import '../../features/worship/prayer_settings_screen.dart';
+import '../../features/worship/qibla_screen.dart';
+import '../../features/worship/quran_screen.dart';
+import '../../features/worship/worship_screen.dart';
 
 /// يخلي GoRouter يعيد تقييم الـ redirect لما الجلسة تتغير
 class _SessionListenable extends ChangeNotifier {
@@ -44,17 +49,20 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/worship',
-              builder: (_, _) => const ComingSoonScreen(
-                title: 'عباداتي',
-                icon: Icons.mosque,
-                features: [
-                  'مواقيت الصلاة حسب موقعك وأذان بإشعار',
-                  'متابعة الصلوات يوميًا',
-                  'الورد اليومي ومتابعة الختمة',
-                  'أذكار الصباح والمساء بعدّاد',
-                  'اتجاه القبلة',
-                ],
-              ),
+              builder: (_, _) => const WorshipScreen(),
+              routes: [
+                GoRoute(
+                  path: 'settings',
+                  builder: (_, _) => const PrayerSettingsScreen(),
+                ),
+                GoRoute(path: 'qibla', builder: (_, _) => const QiblaScreen()),
+                GoRoute(path: 'quran', builder: (_, _) => const QuranScreen()),
+                GoRoute(
+                  path: 'adhkar/:group',
+                  builder: (_, state) =>
+                      AdhkarScreen(groupId: state.pathParameters['group']!),
+                ),
+              ],
             ),
           ]),
           StatefulShellBranch(routes: [

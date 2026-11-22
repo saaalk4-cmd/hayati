@@ -2,6 +2,8 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_config.dart';
+import '../worship/prayer_service.dart';
+import '../worship/prayer_settings.dart';
 
 class ChatMessage {
   const ChatMessage({required this.fromUser, required this.text, this.actions = const []});
@@ -25,12 +27,14 @@ class AssistantService {
         options: HttpsCallableOptions(timeout: const Duration(seconds: 120)),
       );
 
-  Future<ChatMessage> send(List<ChatMessage> history) async {
+  Future<ChatMessage> send(
+      List<ChatMessage> history, Map<String, dynamic> context) async {
     final now = DateTime.now();
     final res = await _fn.call<Map<String, dynamic>>({
       'messages': history.map((m) => m.toApi()).toList(),
       'localTime': now.toIso8601String(),
       'timezoneOffsetMinutes': now.timeZoneOffset.inMinutes,
+      'context': context,
     });
     final data = Map<String, dynamic>.from(res.data);
     return ChatMessage(
@@ -66,7 +70,9 @@ class ChatController extends Notifier<ChatState> {
       // نبعت آخر 20 رسالة بس عشان الطلب يفضل خفيف
       final recent =
           history.length > 20 ? history.sublist(history.length - 20) : history;
-      reply = await ref.read(assistantServiceProvider).send(recent);
+      reply = await ref
+          .read(assistantServiceProvider)
+          .send(recent, _deviceContext());
     } on FirebaseFunctionsException catch (e) {
       reply = ChatMessage(fromUser: false, text: _errorText(e));
     } catch (_) {
@@ -76,6 +82,23 @@ class ChatController extends Notifier<ChatState> {
       );
     }
     state = ChatState(messages: [...history, reply]);
+  }
+
+  /// معلومات محسوبة على الموبايل (المواقيت مرتبطة بموقع الجهاز)
+  Map<String, dynamic> _deviceContext() {
+    final settings = ref.read(prayerSettingsProvider);
+    final times = computePrayerTimes(settings, DateTime.now());
+    final next = nextPrayer(settings, DateTime.now());
+    String hm(DateTime t) =>
+        '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+    return {
+      'place': settings.placeLabel,
+      'prayerTimes': {
+        for (final p in PrayerName.values) p.name: hm(times[p]),
+        'sunrise': hm(times.sunrise),
+      },
+      'nextPrayer': {'name': next.name.name, 'time': hm(next.time)},
+    };
   }
 
   String _errorText(FirebaseFunctionsException e) {

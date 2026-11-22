@@ -36,6 +36,16 @@ const RequestSchema = z.object({
     .min(1)
     .max(MAX_HISTORY),
   localTime: z.string().max(40).optional(),
+  // محسوبة على الموبايل حسب موقعه
+  context: z
+    .object({
+      place: z.string().max(120).optional(),
+      prayerTimes: z.record(z.string().max(10), z.string().max(8)).optional(),
+      nextPrayer: z
+        .object({ name: z.string().max(10), time: z.string().max(8) })
+        .optional(),
+    })
+    .optional(),
   timezoneOffsetMinutes: z.number().int().min(-900).max(900).optional(),
 });
 
@@ -47,12 +57,14 @@ const SYSTEM_PROMPT = `أنت «مساعد حياتي»، مساعد شخصي د
 
 اللي تقدر تعمله:
 - تشوف مهام المستخدم وتضيف مهام جديدة وتعلّم على المهام اللي خلصت، باستخدام الأدوات المتاحة.
+- تعرف مواقيت الصلاة النهارده (مكتوبة تحت) وتسجّل الصلوات اللي صلاها، وتشوف سجل صلواته.
+- تسجّل صفحات القرآن اللي قراها وتقوله وصل لفين في الختمة.
 - ترتب يومه وتقترح أولويات وخطط بناءً على مهامه الحقيقية، فاقرأ المهام الأول قبل ما تقترح.
 - لما المستخدم يطلب إضافة حاجة، أضفها على طول من غير ما تسأل تأكيد، إلا لو الطلب مش واضح.
 - لما تحدد تاريخ، استخدم الصيغة YYYY-MM-DD واحسبه من تاريخ النهارده المكتوب تحت.
 
 حدود:
-- الأقسام دي لسه تحت الإنشاء في التطبيق: الصلاة، العادات، الفلوس، اليوميات، المناسبات. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
+- الأقسام دي لسه تحت الإنشاء في التطبيق: العادات، الفلوس، اليوميات، المناسبات. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
 - متألّفش آيات أو أحاديث. لو استشهدت بآية اذكر السورة ورقم الآية، ولو مش متأكد متستشهدش.
 - في الأسئلة الطبية أو القانونية أو المالية الكبيرة، قدّم معلومة عامة وانصحه يرجع لمتخصص.`;
 
@@ -140,7 +152,138 @@ function buildTools(uid: string, actions: string[]) {
     },
   });
 
-  return [listTasks, addTask, completeTask];
+  const userDoc = db.collection("users").doc(uid);
+  const prayerNames = ["fajr", "dhuhr", "asr", "maghrib", "isha"] as const;
+  const prayerAr: Record<(typeof prayerNames)[number], string> = {
+    fajr: "الفجر",
+    dhuhr: "الظهر",
+    asr: "العصر",
+    maghrib: "المغرب",
+    isha: "العشاء",
+  };
+  const statusAr = {
+    mosque: "في المسجد",
+    ontime: "في وقتها",
+    late: "متأخر",
+    missed: "فاتتني",
+  } as const;
+  const dayKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+  const getPrayerLog = betaZodTool({
+    name: "get_prayer_log",
+    description:
+      "Get which prayers the user logged on a given day. Status values: mosque, ontime, late, missed; a missing prayer means not logged yet.",
+    inputSchema: z.object({ day: dayKey.describe("YYYY-MM-DD") }),
+    run: async ({ day }) => {
+      const snap = await userDoc.collection("prayers").doc(day).get();
+      const data = snap.data() ?? {};
+      const log = Object.fromEntries(
+        prayerNames.map((p) => [p, (data[p] as string | null) ?? null]),
+      );
+      return JSON.stringify({ day, log });
+    },
+  });
+
+  const logPrayer = betaZodTool({
+    name: "log_prayer",
+    description:
+      "Record that the user prayed (or missed) a prayer on a day. Use the user's local date unless they name another day.",
+    inputSchema: z.object({
+      day: dayKey.describe("YYYY-MM-DD"),
+      prayer: z.enum(prayerNames),
+      status: z.enum(["mosque", "ontime", "late", "missed"]),
+    }),
+    run: async ({ day, prayer, status }) => {
+      await userDoc
+        .collection("prayers")
+        .doc(day)
+        .set({ [prayer]: status, updatedAt: Date.now() }, { merge: true });
+      actions.push(`سجّلت صلاة ${prayerAr[prayer]}: ${statusAr[status]}`);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
+  const QURAN_PAGES = 604;
+  const getQuranProgress = betaZodTool({
+    name: "get_quran_progress",
+    description:
+      "Get the user's Quran reading progress: last page read (0-603, 0 = not started), completed khatmas, daily goal in pages, and pages read on a given day.",
+    inputSchema: z.object({ day: dayKey.describe("The user's local date") }),
+    run: async ({ day }) => {
+      const d = (await userDoc.collection("quran").doc("progress").get()).data() ?? {};
+      const log = (d.log as Record<string, number> | undefined) ?? {};
+      return JSON.stringify({
+        page: d.page ?? 0,
+        total_pages: QURAN_PAGES,
+        khatmas: d.khatmas ?? 0,
+        daily_goal: d.dailyGoal ?? 4,
+        pages_read_that_day: log[day] ?? 0,
+      });
+    },
+  });
+
+  const logQuranPages = betaZodTool({
+    name: "log_quran_pages",
+    description:
+      "Add pages of Quran the user just read. Advances their khatma; a finished khatma restarts from page 0.",
+    inputSchema: z.object({
+      day: dayKey.describe("The user's local date"),
+      pages: z.number().int().min(1).max(604),
+    }),
+    run: async ({ day, pages }) => {
+      const ref = userDoc.collection("quran").doc("progress");
+      const result = await db.runTransaction(async (tx) => {
+        const d = (await tx.get(ref)).data() ?? {};
+        const log = (d.log as Record<string, number> | undefined) ?? {};
+        let page = ((d.page as number | undefined) ?? 0) + pages;
+        let khatmas = (d.khatmas as number | undefined) ?? 0;
+        let finished = false;
+        if (page >= QURAN_PAGES) {
+          page = 0;
+          khatmas += 1;
+          finished = true;
+        }
+        tx.set(
+          ref,
+          { page, khatmas, log: { [day]: (log[day] ?? 0) + pages } },
+          { merge: true },
+        );
+        return { page, khatmas, finished };
+      });
+      actions.push(`سجّلت ${pages} صفحة قرآن`);
+      return JSON.stringify({ ok: true, ...result });
+    },
+  });
+
+  return [
+    listTasks,
+    addTask,
+    completeTask,
+    getPrayerLog,
+    logPrayer,
+    getQuranProgress,
+    logQuranPages,
+  ];
+}
+
+function describeContext(ctx: z.infer<typeof RequestSchema>["context"]): string {
+  if (!ctx?.prayerTimes) return "";
+  const names: Record<string, string> = {
+    fajr: "الفجر",
+    sunrise: "الشروق",
+    dhuhr: "الظهر",
+    asr: "العصر",
+    maghrib: "المغرب",
+    isha: "العشاء",
+  };
+  const times = Object.entries(ctx.prayerTimes)
+    .filter(([k]) => k in names)
+    .map(([k, v]) => `${names[k]} ${v}`)
+    .join("، ");
+  const next = ctx.nextPrayer
+    ? `\nالصلاة الجاية: ${names[ctx.nextPrayer.name] ?? ctx.nextPrayer.name} الساعة ${ctx.nextPrayer.time}.`
+    : "";
+  return `\nمواقيت الصلاة النهارده${ctx.place ? ` (${ctx.place})` : ""}: ${times}.${next}`;
 }
 
 /** Atomically counts today's requests; throws when the daily limit is hit. */
@@ -188,7 +331,7 @@ export const askHayati = onCall(
 
     const parsed = RequestSchema.safeParse(request.data);
     if (!parsed.success) throw new HttpsError("invalid-argument", "طلب غير صالح");
-    const { messages, timezoneOffsetMinutes = 120 } = parsed.data;
+    const { messages, timezoneOffsetMinutes = 120, context } = parsed.data;
 
     const last = messages[messages.length - 1];
     if (last.role !== "user") {
@@ -208,7 +351,7 @@ export const askHayati = onCall(
         output_config: { effort: "low" },
         betas: ["server-side-fallback-2026-07-01"],
         fallbacks: "default",
-        system: `${SYSTEM_PROMPT}\n\nالنهارده عند المستخدم: ${label}.`,
+        system: `${SYSTEM_PROMPT}\n\nالنهارده عند المستخدم: ${label}.${describeContext(context)}`,
         tools: buildTools(uid, actions),
         messages: messages.map((m) => ({ role: m.role, content: m.text })),
         max_iterations: 8,

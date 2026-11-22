@@ -11,6 +11,9 @@ import '../../data/session.dart';
 import '../../data/tasks_repository.dart';
 import '../tasks/add_task_sheet.dart';
 import '../tasks/task_tile.dart';
+import '../worship/prayer_log.dart';
+import '../worship/prayer_service.dart';
+import '../worship/worship_screen.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({super.key});
@@ -62,15 +65,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           children: [
             _Header(now: _now, name: name),
             const SizedBox(height: 16),
-            SectionCard(
-              icon: Icons.mosque,
-              title: 'الصلاة الجاية',
+            GestureDetector(
               onTap: () => context.go('/worship'),
-              child: Text(
-                'مواقيت الصلاة والأذان في المرحلة الجاية إن شاء الله.',
-                style: text.bodyMedium,
-              ),
+              child: const NextPrayerHero(compact: true),
             ),
+            const SizedBox(height: 12),
+            const _PrayersRow(),
             const SizedBox(height: 12),
             SectionCard(
               icon: Icons.check_circle,
@@ -203,6 +203,50 @@ class _VerseCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall),
         ],
+      ),
+    );
+  }
+}
+
+/// خمس دوائر صغيرة بحالة صلوات النهارده
+class _PrayersRow extends ConsumerWidget {
+  const _PrayersRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final log = ref.watch(todayPrayerLogProvider);
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => context.go('/worship'),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              for (final p in PrayerName.values)
+                Column(
+                  children: [
+                    Icon(
+                      log[p] == null
+                          ? Icons.radio_button_unchecked
+                          : log[p] == PrayerStatus.missed
+                              ? Icons.cancel
+                              : Icons.check_circle,
+                      color: log[p] == null
+                          ? scheme.outline
+                          : log[p] == PrayerStatus.missed
+                              ? scheme.error
+                              : scheme.primary,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(p.ar, style: Theme.of(context).textTheme.labelMedium),
+                  ],
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -5,7 +5,7 @@
 - إدارة الحالة: Riverpod 3 (`Notifier` / `NotifierProvider`)، والتنقل: go_router (`lib/core/router/app_router.dart`).
 - الألوان من `AppColors` بس (أخضر + ذهبي). أي تصميم على Canva يلتزم بـ `assets/brand/palette.md`.
 - مفيش أي مفاتيح أو أسرار في الكود: إعدادات Firebase بتيجي من `--dart-define`، ومفتاح Claude سرّ على Firebase.
-- البيانات: `users/{uid}/...` في Firestore. وضع الضيف بيستخدم `SharedPreferences` بنفس الواجهة (`TasksRepository`).
+- البيانات: `users/{uid}/...` في Firestore. وضع الضيف بيستخدم `SharedPreferences` بنفس الواجهة (`TasksRepository` للمهام، و`UserStore` لأي مستند تاني). أي مجموعة جديدة لازم تتضاف في `firestore.rules`.
 - المساعد: `functions/src/index.ts`. أي قسم جديد يضيف أدوات (`betaZodTool`) تقرأ وتكتب بيانات المستخدم ده بس.
 - المحتوى الديني: متضيفش أي آية أو حديث من غير مرجع واضح (السورة:الآية).
 - قبل أي commit: `flutter analyze` و `flutter test` و `cd functions && npx tsc --noEmit`.
