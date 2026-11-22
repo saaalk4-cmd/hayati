@@ -10,6 +10,7 @@ import '../../core/widgets/section_card.dart';
 import '../../data/session.dart';
 import '../../data/tasks_repository.dart';
 import '../tasks/add_task_sheet.dart';
+import '../account/guest_migration.dart';
 import '../family/family_models.dart';
 import '../habits/habits_repository.dart';
 import '../onboarding/onboarding_screen.dart';
@@ -76,6 +77,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           children: [
             _Header(now: _now, name: name),
             const SizedBox(height: 12),
+            const _GuestMigrationBanner(),
             const _PlanMyDayButton(),
             const SizedBox(height: 12),
             GestureDetector(
@@ -413,6 +415,92 @@ class _PlanMyDayButton extends StatelessWidget {
               ),
               Text('خطة ذكية من Claude', style: TextStyle(fontSize: 12)),
               Icon(Icons.chevron_left),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// لو سجّل دخول وعنده بيانات من وضع الضيف، نعرض عليه ينقلها
+class _GuestMigrationBanner extends ConsumerStatefulWidget {
+  const _GuestMigrationBanner();
+
+  @override
+  ConsumerState<_GuestMigrationBanner> createState() =>
+      _GuestMigrationBannerState();
+}
+
+class _GuestMigrationBannerState extends ConsumerState<_GuestMigrationBanner> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!ref.watch(guestMigrationProvider)) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: AppColors.gold200.withValues(alpha: 0.7),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'عندك بيانات من وضع الضيف على الموبايل ده',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              const Text('ننقلها لحسابك عشان تتحفظ ومتضيعش؟'),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: _busy
+                          ? null
+                          : () async {
+                              setState(() => _busy = true);
+                              try {
+                                final n = await ref
+                                    .read(guestMigrationProvider.notifier)
+                                    .migrate();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('نقلنا $n عنصر لحسابك ✓'),
+                                    ),
+                                  );
+                                }
+                              } catch (_) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'تعذّر النقل، اتأكد من النت وجرّب تاني',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              } finally {
+                                if (mounted) setState(() => _busy = false);
+                              }
+                            },
+                      child: const Text('انقلها'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: _busy
+                        ? null
+                        : () => ref
+                              .read(guestMigrationProvider.notifier)
+                              .dismiss(),
+                    child: const Text('لا، امسحها'),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

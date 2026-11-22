@@ -12,6 +12,7 @@ import 'package:hayati/features/onboarding/onboarding_screen.dart';
 import 'package:hayati/data/session.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hayati/features/stats/stats.dart';
+import 'package:hayati/features/reminders/smart_reminders.dart';
 import 'package:hayati/features/worship/prayer_log.dart';
 import 'package:hayati/features/worship/adhkar_data.dart';
 import 'package:hayati/features/worship/prayer_service.dart';
@@ -405,5 +406,60 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(onboardedProvider), isTrue);
     expect(prefs.getString(userNameKey), 'أحمد');
+  });
+
+  group('Smart reminders', () {
+    test('fasting days include Monday/Thursday and skip Ramadan', () {
+      final list = upcomingFastingDays(
+        DateTime(2026, 11, 22),
+        monThu: true,
+        whiteDays: true,
+        days: 14,
+      );
+      expect(list, isNotEmpty);
+      for (final (d, _) in list) {
+        final isMonThu =
+            d.weekday == DateTime.monday || d.weekday == DateTime.thursday;
+        expect(isMonThu || list.any((x) => x.$2.contains('البيض')), isTrue);
+      }
+      final none = upcomingFastingDays(
+        DateTime(2026, 11, 22),
+        monThu: false,
+        whiteDays: false,
+      );
+      expect(none, isEmpty);
+    });
+
+    test('morning summary text', () {
+      final day = DateTime(2026, 11, 23);
+      final text = morningSummaryText(
+        day: day,
+        tasks: [
+          HayatiTask(
+            id: '1',
+            title: 'x',
+            dueDate: '2026-11-23',
+            createdAt: DateTime(2026),
+          ),
+          HayatiTask(
+            id: '2',
+            title: 'y',
+            dueDate: '2026-11-20',
+            createdAt: DateTime(2026),
+          ),
+          HayatiTask(
+            id: '3',
+            title: 'z',
+            dueDate: '2026-11-30',
+            createdAt: DateTime(2026),
+          ),
+        ],
+        habits: const [],
+        spentMonth: 3000,
+        budget: 8000,
+      );
+      expect(text, contains('2 مهام'));
+      expect(text, contains('5,000'));
+    });
   });
 }

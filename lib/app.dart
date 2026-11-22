@@ -11,8 +11,14 @@ import 'features/family/occasion_reminders.dart';
 import 'features/habits/habit_reminders.dart';
 import 'features/habits/habits_repository.dart';
 import 'features/lock/lock_service.dart';
+import 'features/money/money_models.dart';
+import 'features/money/money_repository.dart';
+import 'features/money/money_screen.dart';
+import 'features/reminders/smart_reminders.dart';
 import 'features/tasks/task_reminders.dart';
+import 'data/task.dart';
 import 'data/tasks_repository.dart';
+import 'features/habits/habit.dart';
 import 'features/worship/adhan_notifications.dart';
 import 'features/worship/prayer_settings.dart';
 
@@ -29,9 +35,20 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // ملخص الصبح: بيتحسب من البيانات الحالية ويتجدول للصبح الجاي
+    ref.listenManual(_morningInputsProvider, (_, next) {
+      SmartReminders.syncMorning(
+        settings: ref.read(reminderSettingsProvider),
+        tasks: next.$1,
+        habits: next.$2,
+        spentMonth: next.$3,
+        budget: next.$4,
+      );
+    }, fireImmediately: true);
     // جدولة إشعارات الأذان للأيام الجاية
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AdhanNotifications.instance.reschedule(ref.read(prayerSettingsProvider));
+      SmartReminders.syncFasting(ref.read(reminderSettingsProvider));
     });
   }
 
@@ -74,6 +91,10 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
       final v = next.value;
       if (v != null) TaskReminders.sync(v);
     });
+    ref.listen(
+      reminderSettingsProvider,
+      (_, next) => SmartReminders.syncFasting(next),
+    );
 
     return MaterialApp.router(
       title: 'حياتي',
@@ -98,3 +119,17 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
     );
   }
 }
+
+/// مدخلات ملخص الصبح: المهام، العادات، مصروف الشهر، الميزانية
+final _morningInputsProvider =
+    Provider<(List<HayatiTask>, List<Habit>, double, double?)>((ref) {
+      final month = monthKey(DateTime.now());
+      return (
+        ref.watch(tasksProvider).value ?? const [],
+        ref.watch(habitsProvider).value ?? const [],
+        MonthSummary(
+          ref.watch(monthTransactionsProvider(month)).value ?? const [],
+        ).spent,
+        ref.watch(moneySettingsProvider).value?.monthlyBudget,
+      );
+    });

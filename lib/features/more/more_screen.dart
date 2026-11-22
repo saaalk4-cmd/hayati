@@ -4,7 +4,9 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../data/session.dart';
 import '../../data/settings.dart';
+import '../../core/notifications.dart';
 import '../account/account_data.dart';
+import '../reminders/smart_reminders.dart';
 import '../account/privacy_screen.dart';
 import '../lock/lock_service.dart';
 import '../lock/pin_setup_screen.dart';
@@ -17,6 +19,7 @@ class MoreScreen extends ConsumerWidget {
     final session = ref.watch(sessionProvider);
     final lock = ref.watch(lockProvider);
     final mode = ref.watch(themeModeProvider);
+    final reminders = ref.watch(reminderSettingsProvider);
 
     Widget section(String title) => Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
@@ -111,6 +114,50 @@ class MoreScreen extends ConsumerWidget {
               onSelectionChanged: (s) =>
                   ref.read(themeModeProvider.notifier).set(s.first),
             ),
+          ),
+          section('التنبيهات'),
+          SwitchListTile(
+            secondary: const Icon(Icons.wb_twilight),
+            title: const Text('ملخص الصبح'),
+            subtitle: Text('كل يوم الساعة ${reminders.morningHour} الصبح'),
+            value: reminders.morningSummary,
+            onChanged: (v) async {
+              if (v) await AppNotifications.instance.requestPermissions();
+              await ref
+                  .read(reminderSettingsProvider.notifier)
+                  .update(morning: v);
+            },
+          ),
+          if (reminders.morningSummary)
+            ListTile(
+              leading: const SizedBox(width: 24),
+              title: const Text('الساعة'),
+              trailing: DropdownButton<int>(
+                value: reminders.morningHour,
+                underline: const SizedBox(),
+                items: [
+                  for (final h in [5, 6, 7, 8, 9, 10])
+                    DropdownMenuItem(value: h, child: Text('$h الصبح')),
+                ],
+                onChanged: (h) =>
+                    ref.read(reminderSettingsProvider.notifier).update(hour: h),
+              ),
+            ),
+          SwitchListTile(
+            secondary: const Icon(Icons.nights_stay_outlined),
+            title: const Text('تذكير صيام الاتنين والخميس'),
+            subtitle: const Text('بالليل قبلها'),
+            value: reminders.fastingMonThu,
+            onChanged: (v) =>
+                ref.read(reminderSettingsProvider.notifier).update(monThu: v),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.brightness_3_outlined),
+            title: const Text('تذكير الأيام البيض'),
+            subtitle: const Text('13 و14 و15 من كل شهر هجري (حسب التقويم)'),
+            value: reminders.fastingWhiteDays,
+            onChanged: (v) =>
+                ref.read(reminderSettingsProvider.notifier).update(white: v),
           ),
           section('بياناتي'),
           ListTile(
