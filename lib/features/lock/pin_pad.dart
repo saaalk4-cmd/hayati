@@ -37,18 +37,18 @@ class _PinPadState extends State<PinPad> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     Widget key(String d) => SizedBox(
-          width: 76,
-          height: 76,
-          child: TextButton(
-            style: TextButton.styleFrom(shape: const CircleBorder()),
-            onPressed: () => _tap(d),
-            child: Text(d,
-                style: Theme.of(context)
-                    .textTheme
-                    .headlineMedium
-                    ?.copyWith(fontWeight: FontWeight.w600)),
-          ),
-        );
+      width: 76,
+      height: 76,
+      child: TextButton(
+        style: TextButton.styleFrom(shape: const CircleBorder()),
+        onPressed: () => _tap(d),
+        child: Text(
+          d,
+          style: Theme.of(context).textTheme.headlineMedium
+              ?.copyWith(fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
 
     return Directionality(
       textDirection: TextDirection.ltr,
@@ -65,7 +65,9 @@ class _PinPadState extends State<PinPad> {
                 height: 16,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: i < _pin.length ? scheme.secondary : Colors.transparent,
+                  color: i < _pin.length
+                      ? scheme.secondary
+                      : Colors.transparent,
                   border: Border.all(color: scheme.primary, width: 2),
                 ),
               ),

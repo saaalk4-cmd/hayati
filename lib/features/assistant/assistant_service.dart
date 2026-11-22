@@ -6,29 +6,38 @@ import '../worship/prayer_service.dart';
 import '../worship/prayer_settings.dart';
 
 class ChatMessage {
-  const ChatMessage({required this.fromUser, required this.text, this.actions = const []});
+  const ChatMessage({
+    required this.fromUser,
+    required this.text,
+    this.actions = const [],
+  });
   final bool fromUser;
   final String text;
 
   /// ملخص اللي المساعد عمله فعلًا (أضاف مهمة، سجّل مصروف...)
   final List<String> actions;
 
-  Map<String, dynamic> toApi() =>
-      {'role': fromUser ? 'user' : 'assistant', 'text': text};
+  Map<String, dynamic> toApi() => {
+    'role': fromUser ? 'user' : 'assistant',
+    'text': text,
+  };
 }
 
 /// يتصل بدالة askHayati على Firebase، واللي بدورها بتكلم Claude.
 /// مفتاح Claude محفوظ على السيرفر فقط، ومش موجود في التطبيق.
 class AssistantService {
   HttpsCallable get _fn =>
-      FirebaseFunctions.instanceFor(region: AppConfig.functionsRegion)
-          .httpsCallable(
+      FirebaseFunctions.instanceFor(
+        region: AppConfig.functionsRegion,
+      ).httpsCallable(
         'askHayati',
         options: HttpsCallableOptions(timeout: const Duration(seconds: 120)),
       );
 
   Future<ChatMessage> send(
-      List<ChatMessage> history, Map<String, dynamic> context) async {
+    List<ChatMessage> history,
+    Map<String, dynamic> context,
+  ) async {
     final now = DateTime.now();
     final res = await _fn.call<Map<String, dynamic>>({
       'messages': history.map((m) => m.toApi()).toList(),
@@ -68,8 +77,9 @@ class ChatController extends Notifier<ChatState> {
     ChatMessage reply;
     try {
       // نبعت آخر 20 رسالة بس عشان الطلب يفضل خفيف
-      final recent =
-          history.length > 20 ? history.sublist(history.length - 20) : history;
+      final recent = history.length > 20
+          ? history.sublist(history.length - 20)
+          : history;
       reply = await ref
           .read(assistantServiceProvider)
           .send(recent, _deviceContext());
@@ -117,5 +127,6 @@ class ChatController extends Notifier<ChatState> {
   void clear() => state = const ChatState();
 }
 
-final chatProvider =
-    NotifierProvider<ChatController, ChatState>(ChatController.new);
+final chatProvider = NotifierProvider<ChatController, ChatState>(
+  ChatController.new,
+);

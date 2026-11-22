@@ -5,34 +5,34 @@ import 'app_colors.dart';
 
 class AppTheme {
   static ThemeData light() => _build(
-        ColorScheme.fromSeed(
-          seedColor: AppColors.emerald700,
-          brightness: Brightness.light,
-        ).copyWith(
-          primary: AppColors.emerald700,
-          onPrimary: Colors.white,
-          secondary: AppColors.gold500,
-          onSecondary: AppColors.emerald900,
-          tertiary: AppColors.gold700,
-          surface: AppColors.cream,
-          error: AppColors.danger,
-        ),
-      );
+    ColorScheme.fromSeed(
+      seedColor: AppColors.emerald700,
+      brightness: Brightness.light,
+    ).copyWith(
+      primary: AppColors.emerald700,
+      onPrimary: Colors.white,
+      secondary: AppColors.gold500,
+      onSecondary: AppColors.emerald900,
+      tertiary: AppColors.gold700,
+      surface: AppColors.cream,
+      error: AppColors.danger,
+    ),
+  );
 
   static ThemeData dark() => _build(
-        ColorScheme.fromSeed(
-          seedColor: AppColors.emerald700,
-          brightness: Brightness.dark,
-        ).copyWith(
-          primary: AppColors.emerald500,
-          onPrimary: Colors.white,
-          secondary: AppColors.gold500,
-          onSecondary: AppColors.emerald900,
-          tertiary: AppColors.gold200,
-          surface: AppColors.night,
-          surfaceContainerLow: AppColors.nightSurface,
-        ),
-      );
+    ColorScheme.fromSeed(
+      seedColor: AppColors.emerald700,
+      brightness: Brightness.dark,
+    ).copyWith(
+      primary: AppColors.emerald500,
+      onPrimary: Colors.white,
+      secondary: AppColors.gold500,
+      onSecondary: AppColors.emerald900,
+      tertiary: AppColors.gold200,
+      surface: AppColors.night,
+      surfaceContainerLow: AppColors.nightSurface,
+    ),
+  );
 
   static ThemeData _build(ColorScheme scheme) {
     final base = ThemeData(
@@ -71,14 +71,18 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           textStyle: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

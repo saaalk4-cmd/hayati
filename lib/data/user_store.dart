@@ -22,7 +22,11 @@ class FirestoreUserStore implements UserStore {
   final String uid;
 
   DocumentReference<Map<String, dynamic>> _ref(String c, String d) =>
-      FirebaseFirestore.instance.collection('users').doc(uid).collection(c).doc(d);
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection(c)
+          .doc(d);
 
   @override
   Stream<Map<String, dynamic>?> watch(String c, String d) =>
@@ -57,7 +61,8 @@ class LocalUserStore implements UserStore {
   }
 
   @override
-  Future<Map<String, dynamic>?> get(String c, String d) async => _read(_key(c, d));
+  Future<Map<String, dynamic>?> get(String c, String d) async =>
+      _read(_key(c, d));
 
   @override
   Future<void> merge(String c, String d, Map<String, dynamic> data) async {

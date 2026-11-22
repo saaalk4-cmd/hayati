@@ -8,12 +8,12 @@ enum PrayerName { fajr, dhuhr, asr, maghrib, isha }
 
 extension PrayerNameAr on PrayerName {
   String get ar => const {
-        PrayerName.fajr: 'الفجر',
-        PrayerName.dhuhr: 'الظهر',
-        PrayerName.asr: 'العصر',
-        PrayerName.maghrib: 'المغرب',
-        PrayerName.isha: 'العشاء',
-      }[this]!;
+    PrayerName.fajr: 'الفجر',
+    PrayerName.dhuhr: 'الظهر',
+    PrayerName.asr: 'العصر',
+    PrayerName.maghrib: 'المغرب',
+    PrayerName.isha: 'العشاء',
+  }[this]!;
 }
 
 class DayPrayerTimes {
@@ -32,17 +32,13 @@ DayPrayerTimes computePrayerTimes(PrayerSettings s, DateTime day) {
     DateComponents(day.year, day.month, day.day),
     s.parameters,
   );
-  return DayPrayerTimes(
-    DateTime(day.year, day.month, day.day),
-    {
-      PrayerName.fajr: pt.fajr.toLocal(),
-      PrayerName.dhuhr: pt.dhuhr.toLocal(),
-      PrayerName.asr: pt.asr.toLocal(),
-      PrayerName.maghrib: pt.maghrib.toLocal(),
-      PrayerName.isha: pt.isha.toLocal(),
-    },
-    pt.sunrise.toLocal(),
-  );
+  return DayPrayerTimes(DateTime(day.year, day.month, day.day), {
+    PrayerName.fajr: pt.fajr.toLocal(),
+    PrayerName.dhuhr: pt.dhuhr.toLocal(),
+    PrayerName.asr: pt.asr.toLocal(),
+    PrayerName.maghrib: pt.maghrib.toLocal(),
+    PrayerName.isha: pt.isha.toLocal(),
+  }, pt.sunrise.toLocal());
 }
 
 class NextPrayer {

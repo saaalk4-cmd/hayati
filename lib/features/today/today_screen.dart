@@ -10,6 +10,8 @@ import '../../core/widgets/section_card.dart';
 import '../../data/session.dart';
 import '../../data/tasks_repository.dart';
 import '../tasks/add_task_sheet.dart';
+import '../habits/habits_repository.dart';
+import '../habits/habits_screen.dart';
 import '../tasks/task_tile.dart';
 import '../worship/prayer_log.dart';
 import '../worship/prayer_service.dart';
@@ -30,7 +32,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   void initState() {
     super.initState();
     _timer = Timer.periodic(
-        const Duration(minutes: 1), (_) => setState(() => _now = DateTime.now()));
+      const Duration(minutes: 1),
+      (_) => setState(() => _now = DateTime.now()),
+    );
   }
 
   @override
@@ -83,7 +87,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               child: todays.isEmpty
                   ? Row(
                       children: [
-                        const Expanded(child: Text('يومك فاضي، تحب تضيف مهمة؟')),
+                        const Expanded(
+                          child: Text('يومك فاضي، تحب تضيف مهمة؟'),
+                        ),
                         TextButton(
                           onPressed: () => showAddTaskSheet(context),
                           child: const Text('إضافة'),
@@ -92,34 +98,24 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                     )
                   : Column(
                       children: [
-                        for (final t in todays.take(5)) TaskTile(task: t, dense: true),
+                        for (final t in todays.take(5))
+                          TaskTile(task: t, dense: true),
                         if (todays.length > 5)
-                          Text('و ${todays.length - 5} كمان...',
-                              style: text.bodySmall),
+                          Text(
+                            'و ${todays.length - 5} كمان...',
+                            style: text.bodySmall,
+                          ),
                       ],
                     ),
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: SectionCard(
-                    icon: Icons.local_fire_department,
-                    title: 'عاداتي',
-                    onTap: () => context.go('/more'),
-                    child: const Text('قريبًا'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SectionCard(
-                    icon: Icons.account_balance_wallet,
-                    title: 'مصروف اليوم',
-                    onTap: () => context.go('/money'),
-                    child: const Text('قريبًا'),
-                  ),
-                ),
-              ],
+            const _HabitsCard(),
+            const SizedBox(height: 12),
+            SectionCard(
+              icon: Icons.account_balance_wallet,
+              title: 'مصروف اليوم',
+              onTap: () => context.go('/money'),
+              child: const Text('قريبًا في المرحلة 4 إن شاء الله'),
             ),
             const SizedBox(height: 12),
             const _VerseCard(),
@@ -155,14 +151,20 @@ class _Header extends StatelessWidget {
             name.isEmpty
                 ? HayatiDates.greeting(now)
                 : '${HayatiDates.greeting(now)} يا $name',
-            style: text.headlineSmall
-                ?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+            style: text.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 8),
-          Text(HayatiDates.gregorian(now),
-              style: text.bodyLarge?.copyWith(color: Colors.white70)),
-          Text(HayatiDates.hijri(now),
-              style: text.bodyLarge?.copyWith(color: AppColors.gold500)),
+          Text(
+            HayatiDates.gregorian(now),
+            style: text.bodyLarge?.copyWith(color: Colors.white70),
+          ),
+          Text(
+            HayatiDates.hijri(now),
+            style: text.bodyLarge?.copyWith(color: AppColors.gold500),
+          ),
         ],
       ),
     );
@@ -193,15 +195,17 @@ class _VerseCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(verse,
-              textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(height: 1.8, fontWeight: FontWeight.w600)),
-          Text('﴿$ref﴾',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            verse,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(height: 1.8, fontWeight: FontWeight.w600),
+          ),
+          Text(
+            '﴿$ref﴾',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ],
       ),
     );
@@ -232,13 +236,13 @@ class _PrayersRow extends ConsumerWidget {
                       log[p] == null
                           ? Icons.radio_button_unchecked
                           : log[p] == PrayerStatus.missed
-                              ? Icons.cancel
-                              : Icons.check_circle,
+                          ? Icons.cancel
+                          : Icons.check_circle,
                       color: log[p] == null
                           ? scheme.outline
                           : log[p] == PrayerStatus.missed
-                              ? scheme.error
-                              : scheme.primary,
+                          ? scheme.error
+                          : scheme.primary,
                     ),
                     const SizedBox(height: 4),
                     Text(p.ar, style: Theme.of(context).textTheme.labelMedium),
@@ -248,6 +252,40 @@ class _PrayersRow extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// عادات النهارده (المجدولة لليوم بس)
+class _HabitsCard extends ConsumerWidget {
+  const _HabitsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = DateTime.now();
+    final habits = (ref.watch(habitsProvider).value ?? const [])
+        .where((h) => h.isScheduled(now))
+        .toList();
+    final done = habits.where((h) => h.isDoneOn(now)).length;
+    return SectionCard(
+      icon: Icons.local_fire_department,
+      title: 'عادات النهارده',
+      trailing: habits.isEmpty
+          ? null
+          : Text(
+              '$done/${habits.length}',
+              style: Theme.of(context).textTheme.labelLarge
+                  ?.copyWith(color: AppColors.gold700),
+            ),
+      onTap: () => context.push('/more/habits'),
+      child: habits.isEmpty
+          ? const Text('ضيف عادة صغيرة تبدأ بيها يومك 🌱')
+          : Column(
+              children: [
+                for (final h in habits.take(4))
+                  HabitCard(habit: h, compact: true),
+              ],
+            ),
     );
   }
 }

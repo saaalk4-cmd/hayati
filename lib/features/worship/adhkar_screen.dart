@@ -13,8 +13,9 @@ class AdhkarScreen extends StatefulWidget {
 }
 
 class _AdhkarScreenState extends State<AdhkarScreen> {
-  late final AdhkarGroup group =
-      allAdhkar.firstWhere((g) => g.id == widget.groupId);
+  late final AdhkarGroup group = allAdhkar.firstWhere(
+    (g) => g.id == widget.groupId,
+  );
   late final List<int> _remaining = [for (final d in group.items) d.count];
 
   void _tap(int i) {
@@ -23,9 +24,8 @@ class _AdhkarScreenState extends State<AdhkarScreen> {
     setState(() => _remaining[i]--);
     if (_remaining.every((r) => r == 0)) {
       HapticFeedback.mediumImpact();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تقبّل الله منك 🌿')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('تقبّل الله منك 🌿')));
     }
   }
 
@@ -71,23 +71,27 @@ class _AdhkarScreenState extends State<AdhkarScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text(d.text,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(height: 2)),
+                      Text(
+                        d.text,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(height: 2),
+                      ),
                       const SizedBox(height: 12),
                       Row(
                         children: [
                           Expanded(
                             child: Text(
-                              d.note == null ? d.source : '${d.source} • ${d.note}',
+                              d.note == null
+                                  ? d.source
+                                  : '${d.source} • ${d.note}',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 6),
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
                               color: finished
                                   ? AppColors.emerald500
@@ -95,12 +99,18 @@ class _AdhkarScreenState extends State<AdhkarScreen> {
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: finished
-                                ? const Icon(Icons.check,
-                                    color: Colors.white, size: 18)
-                                : Text('$left',
+                                ? const Icon(
+                                    Icons.check,
+                                    color: Colors.white,
+                                    size: 18,
+                                  )
+                                : Text(
+                                    '$left',
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        color: AppColors.emerald900)),
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.emerald900,
+                                    ),
+                                  ),
                           ),
                         ],
                       ),

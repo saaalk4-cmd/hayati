@@ -48,8 +48,10 @@ class WorshipScreen extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: 16),
-          Text('صلوات النهارده',
-              style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'صلوات النهارده',
+            style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           const PrayerChecklist(),
           const SizedBox(height: 16),
@@ -99,8 +101,10 @@ class WorshipScreen extends ConsumerWidget {
             onTap: () => context.push('/worship/quran'),
             trailing: quran == null
                 ? null
-                : Text('${quran.todayPages}/${quran.dailyGoal} صفحة',
-                    style: text.labelLarge?.copyWith(color: AppColors.gold700)),
+                : Text(
+                    '${quran.todayPages}/${quran.dailyGoal} صفحة',
+                    style: text.labelLarge?.copyWith(color: AppColors.gold700),
+                  ),
             child: quran == null
                 ? const LinearProgressIndicator()
                 : Column(
@@ -112,9 +116,11 @@ class WorshipScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       const SizedBox(height: 8),
-                      Text(quran.page == 0
-                          ? 'ابدأ ختمة جديدة'
-                          : 'وصلت صفحة ${quran.page} • الجزء ${juzOfPage(quran.page)}'),
+                      Text(
+                        quran.page == 0
+                            ? 'ابدأ ختمة جديدة'
+                            : 'وصلت صفحة ${quran.page} • الجزء ${juzOfPage(quran.page)}',
+                      ),
                     ],
                   ),
           ),
@@ -143,9 +149,11 @@ class _Tile extends StatelessWidget {
             children: [
               Icon(icon, color: scheme.primary, size: 30),
               const SizedBox(height: 8),
-              Text(title,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                  textAlign: TextAlign.center),
+              Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),
@@ -182,15 +190,21 @@ class NextPrayerHero extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('الصلاة الجاية',
-                    style: text.bodyMedium?.copyWith(color: Colors.white70)),
+                Text(
+                  'الصلاة الجاية',
+                  style: text.bodyMedium?.copyWith(color: Colors.white70),
+                ),
                 Text(
                   '${next.name.ar} • ${formatPrayerTime(next.time)}',
                   style: text.titleLarge?.copyWith(
-                      color: Colors.white, fontWeight: FontWeight.w800),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-                Text(formatCountdown(next.time.difference(now)),
-                    style: text.bodyLarge?.copyWith(color: AppColors.gold500)),
+                Text(
+                  formatCountdown(next.time.difference(now)),
+                  style: text.bodyLarge?.copyWith(color: AppColors.gold500),
+                ),
               ],
             ),
           ),
@@ -220,16 +234,18 @@ class PrayerChecklist extends ConsumerWidget {
                 log[p] == null
                     ? Icons.radio_button_unchecked
                     : log[p] == PrayerStatus.missed
-                        ? Icons.cancel
-                        : Icons.check_circle,
+                    ? Icons.cancel
+                    : Icons.check_circle,
                 color: log[p] == null
                     ? scheme.outline
                     : log[p] == PrayerStatus.missed
-                        ? scheme.error
-                        : scheme.primary,
+                    ? scheme.error
+                    : scheme.primary,
               ),
-              title: Text(p.ar,
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              title: Text(
+                p.ar,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
               subtitle: log[p] == null ? null : Text(log[p]!.ar),
               trailing: Text(formatPrayerTime(times[p])),
               enabled: !times[p].isAfter(now) || log[p] != null,
@@ -251,10 +267,7 @@ class PrayerChecklist extends ConsumerWidget {
           children: [
             Text('صلاة ${p.ar}', style: Theme.of(c).textTheme.titleLarge),
             for (final s in PrayerStatus.values)
-              ListTile(
-                title: Text(s.ar),
-                onTap: () => Navigator.pop(c, s),
-              ),
+              ListTile(title: Text(s.ar), onTap: () => Navigator.pop(c, s)),
             ListTile(
               title: const Text('مسح'),
               leading: const Icon(Icons.clear),

@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hayati/core/utils/date_utils.dart';
 import 'package:hayati/data/tasks_repository.dart';
 import 'package:adhan/adhan.dart';
+import 'package:hayati/data/task.dart';
+import 'package:hayati/features/habits/habit.dart';
 import 'package:hayati/features/lock/pin_pad.dart';
 import 'package:hayati/features/worship/adhkar_data.dart';
 import 'package:hayati/features/worship/prayer_service.dart';
@@ -111,6 +113,77 @@ void main() {
           expect(d.count, greaterThan(0));
         }
       }
+    });
+  });
+
+  group('Habits', () {
+    final today = DateTime(2026, 11, 22); // أحد
+    Habit h(Set<String> done, {Set<int> weekdays = const {1, 2, 3, 4, 5, 6, 7}}) =>
+        Habit(
+          id: 'h',
+          title: 'قراءة',
+          weekdays: weekdays,
+          done: done,
+          createdAt: DateTime(2026, 1, 1),
+        );
+
+    test('streak counts consecutive days including today', () {
+      expect(h({'2026-11-22', '2026-11-21', '2026-11-20'}).streak(today), 3);
+    });
+
+    test('streak continues from yesterday if today not done yet', () {
+      expect(h({'2026-11-21', '2026-11-20'}).streak(today), 2);
+    });
+
+    test('gap breaks the streak', () {
+      expect(h({'2026-11-22', '2026-11-20'}).streak(today), 1);
+    });
+
+    test('unscheduled days are skipped', () {
+      // الجمعة (5) مش مجدولة، فالسلسلة بتعدّي عليها
+      final habit = h({'2026-11-22', '2026-11-22', '2026-11-20'},
+          weekdays: const {1, 2, 3, 4, 6, 7});
+      expect(habit.streak(today), 1); // السبت 21 مجدول ومش متعمل
+      final habit2 = h({'2026-11-22', '2026-11-21', '2026-11-19'},
+          weekdays: const {1, 2, 3, 4, 6, 7});
+      expect(habit2.streak(today), 3);
+    });
+
+    test('map round trip', () {
+      final a = h({'2026-11-22'});
+      final b = Habit.fromMap('h', a.toMap());
+      expect(b.done, a.done);
+      expect(b.weekdays, a.weekdays);
+    });
+  });
+
+  group('Repeating tasks', () {
+    test('daily task creates next day', () {
+      final t = HayatiTask(
+        id: '1',
+        title: 'رياضة',
+        dueDate: '2026-11-22',
+        repeat: TaskRepeat.daily,
+        remindAt: DateTime(2026, 11, 22, 7, 30),
+        createdAt: DateTime(2026, 11, 1),
+      );
+      final n = t.nextOccurrence('2')!;
+      expect(n.dueDate, '2026-11-23');
+      expect(n.remindAt, DateTime(2026, 11, 23, 7, 30));
+      expect(n.done, isFalse);
+    });
+
+    test('monthly and none', () {
+      final t = HayatiTask(
+        id: '1',
+        title: 'فاتورة',
+        dueDate: '2026-11-30',
+        repeat: TaskRepeat.monthly,
+        createdAt: DateTime(2026, 11, 1),
+      );
+      expect(t.nextOccurrence('2')!.dueDate!.startsWith('2026-12'), isTrue);
+      final once = HayatiTask(id: '3', title: 'x', createdAt: DateTime(2026));
+      expect(once.nextOccurrence('4'), isNull);
     });
   });
 }

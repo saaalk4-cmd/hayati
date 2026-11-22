@@ -37,22 +37,28 @@ class _LockScreenState extends ConsumerState<LockScreen> {
             const SizedBox(height: 48),
             const BrandMark(size: 72),
             const SizedBox(height: 20),
-            Text('اكتب رمز الدخول',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'اكتب رمز الدخول',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             SizedBox(
               height: 24,
               child: _error == null
                   ? null
-                  : Text(_error!,
+                  : Text(
+                      _error!,
                       style: TextStyle(
-                          color: Theme.of(context).colorScheme.error)),
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
             ),
             const Spacer(),
             PinPad(
               onCompleted: (pin) async {
-                final ok =
-                    await ref.read(lockProvider.notifier).unlockWithPin(pin);
+                final ok = await ref
+                    .read(lockProvider.notifier)
+                    .unlockWithPin(pin);
                 if (!ok) setState(() => _error = 'الرمز غلط، جرّب تاني');
                 return ok;
               },

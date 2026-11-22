@@ -59,12 +59,14 @@ const SYSTEM_PROMPT = `أنت «مساعد حياتي»، مساعد شخصي د
 - تشوف مهام المستخدم وتضيف مهام جديدة وتعلّم على المهام اللي خلصت، باستخدام الأدوات المتاحة.
 - تعرف مواقيت الصلاة النهارده (مكتوبة تحت) وتسجّل الصلوات اللي صلاها، وتشوف سجل صلواته.
 - تسجّل صفحات القرآن اللي قراها وتقوله وصل لفين في الختمة.
+- تشوف عاداته وسلسلة كل عادة (streak)، وتضيف عادات جديدة، وتعلّم على العادة لما يعملها. شجّعه على السلاسل الطويلة من غير مبالغة.
+- المهام ليها قوائم (عام، شغل، بيت، مشتريات، دراسة) وممكن تتكرر (كل يوم، كل أسبوع، كل شهر).
 - ترتب يومه وتقترح أولويات وخطط بناءً على مهامه الحقيقية، فاقرأ المهام الأول قبل ما تقترح.
 - لما المستخدم يطلب إضافة حاجة، أضفها على طول من غير ما تسأل تأكيد، إلا لو الطلب مش واضح.
 - لما تحدد تاريخ، استخدم الصيغة YYYY-MM-DD واحسبه من تاريخ النهارده المكتوب تحت.
 
 حدود:
-- الأقسام دي لسه تحت الإنشاء في التطبيق: العادات، الفلوس، اليوميات، المناسبات. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
+- الأقسام دي لسه تحت الإنشاء في التطبيق: الفلوس، اليوميات، المناسبات. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
 - متألّفش آيات أو أحاديث. لو استشهدت بآية اذكر السورة ورقم الآية، ولو مش متأكد متستشهدش.
 - في الأسئلة الطبية أو القانونية أو المالية الكبيرة، قدّم معلومة عامة وانصحه يرجع لمتخصص.`;
 
@@ -73,8 +75,42 @@ interface TaskDoc {
   done: boolean;
   dueDate: string | null;
   notes: string | null;
+  list?: string;
+  repeat?: string;
   source: string;
   createdAt: number;
+}
+
+interface HabitDoc {
+  title: string;
+  emoji: string;
+  weekdays: number[];
+  reminder: string | null;
+  done: Record<string, boolean>;
+  source: string;
+  createdAt: number;
+}
+
+/** Monday=1 ... Sunday=7, matching Dart's DateTime.weekday. */
+function weekdayOf(day: string): number {
+  const d = new Date(`${day}T12:00:00Z`).getUTCDay();
+  return d === 0 ? 7 : d;
+}
+
+function habitStreak(h: HabitDoc, today: string): number {
+  const days = h.weekdays?.length ? h.weekdays : [1, 2, 3, 4, 5, 6, 7];
+  const cursor = new Date(`${today}T12:00:00Z`);
+  const key = () => cursor.toISOString().slice(0, 10);
+  if (!h.done?.[key()]) cursor.setUTCDate(cursor.getUTCDate() - 1);
+  let count = 0;
+  for (let i = 0; i < 400; i++) {
+    if (days.includes(weekdayOf(key()))) {
+      if (!h.done?.[key()]) break;
+      count++;
+    }
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
+  return count;
 }
 
 function buildTools(uid: string, actions: string[]) {
@@ -100,6 +136,8 @@ function buildTools(uid: string, actions: string[]) {
           done: t.done,
           due_date: t.dueDate ?? null,
           notes: t.notes ?? null,
+          list: t.list ?? "عام",
+          repeat: t.repeat ?? "none",
         }));
       return JSON.stringify({ count: list.length, tasks: list });
     },
@@ -117,13 +155,21 @@ function buildTools(uid: string, actions: string[]) {
         .nullable()
         .describe("Due date as YYYY-MM-DD, or null if none"),
       notes: z.string().max(500).nullable().describe("Optional details"),
+      list: z
+        .enum(["عام", "شغل", "بيت", "مشتريات", "دراسة"])
+        .describe("Which list the task belongs to. Use عام if unsure."),
+      repeat: z
+        .enum(["none", "daily", "weekly", "monthly"])
+        .describe("Repeat rule; needs a due_date when not none"),
     }),
-    run: async ({ title, due_date, notes }) => {
+    run: async ({ title, due_date, notes, list, repeat }) => {
       const doc: TaskDoc = {
         title,
         done: false,
         dueDate: due_date,
         notes,
+        list,
+        repeat: due_date ? repeat : "none",
         source: "assistant",
         createdAt: Date.now(),
       };
@@ -255,7 +301,90 @@ function buildTools(uid: string, actions: string[]) {
     },
   });
 
+  const habits = userDoc.collection("habits");
+
+  const listHabits = betaZodTool({
+    name: "list_habits",
+    description:
+      "List the user's habits with id, title, scheduled weekdays (1=Mon..7=Sun), whether done on the given day, and current streak.",
+    inputSchema: z.object({ day: dayKey.describe("The user's local date") }),
+    run: async ({ day }) => {
+      const snap = await habits.get();
+      const list = snap.docs.map((d) => {
+        const h = d.data() as HabitDoc;
+        return {
+          id: d.id,
+          title: h.title,
+          emoji: h.emoji,
+          weekdays: h.weekdays,
+          scheduled_that_day: (h.weekdays?.length ? h.weekdays : [1, 2, 3, 4, 5, 6, 7]).includes(weekdayOf(day)),
+          done_that_day: Boolean(h.done?.[day]),
+          streak: habitStreak(h, day),
+          reminder: h.reminder,
+        };
+      });
+      return JSON.stringify({ count: list.length, habits: list });
+    },
+  });
+
+  const addHabit = betaZodTool({
+    name: "add_habit",
+    description:
+      "Create a new recurring habit for the user (e.g. read 10 pages daily).",
+    inputSchema: z.object({
+      title: z.string().min(1).max(120),
+      emoji: z.string().max(8).describe("One emoji that fits the habit"),
+      weekdays: z
+        .array(z.number().int().min(1).max(7))
+        .min(1)
+        .max(7)
+        .describe("Days it applies: 1=Mon..7=Sun. All 7 for daily."),
+      reminder: z
+        .string()
+        .regex(/^\d{2}:\d{2}$/)
+        .nullable()
+        .describe("Daily reminder time HH:mm (24h), or null"),
+    }),
+    run: async ({ title, emoji, weekdays, reminder }) => {
+      const doc: HabitDoc = {
+        title,
+        emoji,
+        weekdays: [...new Set(weekdays)].sort(),
+        reminder,
+        done: {},
+        source: "assistant",
+        createdAt: Date.now(),
+      };
+      const ref = await habits.add(doc);
+      actions.push(`أضفت عادة: ${emoji} ${title}`);
+      return JSON.stringify({ ok: true, id: ref.id });
+    },
+  });
+
+  const checkHabit = betaZodTool({
+    name: "check_habit",
+    description:
+      "Mark a habit as done (or undone) on a day. Get the habit id from list_habits first.",
+    inputSchema: z.object({
+      habit_id: z.string().min(1).max(100),
+      day: dayKey.describe("YYYY-MM-DD"),
+      done: z.boolean(),
+    }),
+    run: async ({ habit_id, day, done }) => {
+      const ref = habits.doc(habit_id);
+      const snap = await ref.get();
+      if (!snap.exists) return JSON.stringify({ ok: false, error: "not_found" });
+      await ref.update({ [`done.${day}`]: done ? true : FieldValue.delete() });
+      const h = snap.data() as HabitDoc;
+      actions.push(done ? `علّمت على: ${h.emoji} ${h.title}` : `شلت العلامة: ${h.title}`);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
   return [
+    listHabits,
+    addHabit,
+    checkHabit,
     listTasks,
     addTask,
     completeTask,

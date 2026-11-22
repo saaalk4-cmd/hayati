@@ -34,8 +34,9 @@ class UserSession extends Session {
 }
 
 final firebaseReadyProvider = Provider<bool>((ref) => false);
-final sharedPrefsProvider =
-    Provider<SharedPreferences>((ref) => throw UnimplementedError());
+final sharedPrefsProvider = Provider<SharedPreferences>(
+  (ref) => throw UnimplementedError(),
+);
 
 const _guestKey = 'guest_mode';
 
@@ -62,11 +63,11 @@ class SessionController extends Notifier<Session> {
   }
 
   Session _fromUser(User u) => UserSession(
-        uid: u.uid,
-        name: u.displayName,
-        email: u.email,
-        photoUrl: u.photoURL,
-      );
+    uid: u.uid,
+    name: u.displayName,
+    email: u.email,
+    photoUrl: u.photoURL,
+  );
 
   Future<void> continueAsGuest() async {
     await _prefs.setBool(_guestKey, true);
@@ -85,14 +86,19 @@ class SessionController extends Notifier<Session> {
     await FirebaseAuth.instance.signInWithCredential(credential);
   }
 
-  Future<void> signInWithEmail(String email, String password) =>
-      FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
+  Future<void> signInWithEmail(String email, String password) => FirebaseAuth
+      .instance
+      .signInWithEmailAndPassword(email: email, password: password);
 
   Future<void> registerWithEmail(
-      String name, String email, String password) async {
-    final cred = await FirebaseAuth.instance
-        .createUserWithEmailAndPassword(email: email, password: password);
+    String name,
+    String email,
+    String password,
+  ) async {
+    final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
     await cred.user?.updateDisplayName(name);
     await cred.user?.reload();
     final u = FirebaseAuth.instance.currentUser;
@@ -112,8 +118,9 @@ class SessionController extends Notifier<Session> {
   }
 }
 
-final sessionProvider =
-    NotifierProvider<SessionController, Session>(SessionController.new);
+final sessionProvider = NotifierProvider<SessionController, Session>(
+  SessionController.new,
+);
 
 /// ترجمة أخطاء تسجيل الدخول لرسائل عربية مفهومة
 String authErrorMessage(Object e) {

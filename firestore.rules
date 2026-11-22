@@ -16,6 +16,15 @@ service cloud.firestore {
           && request.resource.data.title.size() <= 200;
       }
 
+      // العادات: users/{uid}/habits/{id}
+      match /habits/{habitId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.title is string
+          && request.resource.data.title.size() > 0
+          && request.resource.data.title.size() <= 120;
+      }
+
       // سجل الصلوات: users/{uid}/prayers/{yyyy-MM-dd}
       match /prayers/{day} {
         allow read, write: if isOwner(uid);

@@ -2,7 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../theme/app_colors.dart';
 
-/// شعار مؤقت لـ«حياتي» لحد ما نجهّز الشعار النهائي على Canva
+/// شعار «حياتي» (مصمَّم على Canva — assets/brand/logo_canva.png)
 class BrandMark extends StatelessWidget {
   const BrandMark({super.key, this.size = 88});
   final double size;
@@ -13,12 +13,7 @@ class BrandMark extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.emerald700, AppColors.emerald900],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ),
-        borderRadius: BorderRadius.circular(size * 0.3),
+        borderRadius: BorderRadius.circular(size * 0.24),
         boxShadow: [
           BoxShadow(
             color: AppColors.emerald900.withValues(alpha: 0.25),
@@ -27,16 +22,8 @@ class BrandMark extends StatelessWidget {
           ),
         ],
       ),
-      alignment: Alignment.center,
-      child: Text(
-        'ح',
-        style: TextStyle(
-          color: AppColors.gold500,
-          fontSize: size * 0.5,
-          fontWeight: FontWeight.w800,
-          height: 1.1,
-        ),
-      ),
+      clipBehavior: Clip.antiAlias,
+      child: Image.asset('assets/brand/brand_mark.png', fit: BoxFit.cover),
     );
   }
 }

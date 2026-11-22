@@ -23,10 +23,11 @@ class QiblaScreen extends ConsumerWidget {
         stream: FlutterCompass.events,
         builder: (context, snap) {
           final heading = snap.data?.heading;
-          final noSensor = snap.connectionState == ConnectionState.active &&
-              heading == null;
+          final noSensor =
+              snap.connectionState == ConnectionState.active && heading == null;
           final angle = ((qibla - (heading ?? 0)) * math.pi / 180);
-          final aligned = heading != null &&
+          final aligned =
+              heading != null &&
               ((qibla - heading + 540) % 360 - 180).abs() < 5;
 
           return ListView(
@@ -48,7 +49,9 @@ class QiblaScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: aligned ? AppColors.gold500 : AppColors.emerald700,
+                          color: aligned
+                              ? AppColors.gold500
+                              : AppColors.emerald700,
                           width: aligned ? 6 : 3,
                         ),
                       ),
@@ -58,12 +61,20 @@ class QiblaScreen extends ConsumerWidget {
                       duration: const Duration(milliseconds: 200),
                       child: const Column(
                         children: [
-                          Icon(Icons.navigation, size: 96, color: AppColors.gold500),
+                          Icon(
+                            Icons.navigation,
+                            size: 96,
+                            color: AppColors.gold500,
+                          ),
                           Spacer(),
                         ],
                       ),
                     ),
-                    const Icon(Icons.mosque, size: 56, color: AppColors.emerald700),
+                    const Icon(
+                      Icons.mosque,
+                      size: 56,
+                      color: AppColors.emerald700,
+                    ),
                   ],
                 ),
               ),
@@ -72,10 +83,10 @@ class QiblaScreen extends ConsumerWidget {
                 noSensor
                     ? 'موبايلك مفيهوش بوصلة. استخدم الزاوية المكتوبة فوق مع بوصلة خارجية.'
                     : heading == null
-                        ? 'جاري تشغيل البوصلة...'
-                        : aligned
-                            ? 'إنت متجه للقبلة ✓'
-                            : 'لفّ الموبايل لحد ما السهم الذهبي يبقى لفوق',
+                    ? 'جاري تشغيل البوصلة...'
+                    : aligned
+                    ? 'إنت متجه للقبلة ✓'
+                    : 'لفّ الموبايل لحد ما السهم الذهبي يبقى لفوق',
                 textAlign: TextAlign.center,
                 style: text.titleMedium,
               ),

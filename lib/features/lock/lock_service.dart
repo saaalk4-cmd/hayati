@@ -52,7 +52,8 @@ class LockController extends Notifier<LockState> {
 
   Future<void> enable(String pin, {required bool biometrics}) async {
     final salt = base64Url.encode(
-        List<int>.generate(16, (_) => Random.secure().nextInt(256)));
+      List<int>.generate(16, (_) => Random.secure().nextInt(256)),
+    );
     await _storage.write(key: _saltKey, value: salt);
     await _storage.write(key: _pinKey, value: _hash(pin, salt));
     final prefs = ref.read(sharedPrefsProvider);
@@ -114,5 +115,6 @@ class LockController extends Notifier<LockState> {
   }
 }
 
-final lockProvider =
-    NotifierProvider<LockController, LockState>(LockController.new);
+final lockProvider = NotifierProvider<LockController, LockState>(
+  LockController.new,
+);

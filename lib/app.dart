@@ -6,7 +6,11 @@ import 'core/theme/app_theme.dart';
 import 'data/session.dart';
 import 'data/settings.dart';
 import 'features/lock/lock_screen.dart';
+import 'features/habits/habit_reminders.dart';
+import 'features/habits/habits_repository.dart';
 import 'features/lock/lock_service.dart';
+import 'features/tasks/task_reminders.dart';
+import 'data/tasks_repository.dart';
 import 'features/worship/adhan_notifications.dart';
 import 'features/worship/prayer_settings.dart';
 
@@ -51,8 +55,19 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
     final mode = ref.watch(themeModeProvider);
     final locked = ref.watch(lockProvider.select((s) => s.locked));
     final session = ref.watch(sessionProvider);
-    ref.listen(prayerSettingsProvider,
-        (_, next) => AdhanNotifications.instance.reschedule(next));
+    ref.listen(
+      prayerSettingsProvider,
+      (_, next) => AdhanNotifications.instance.reschedule(next),
+    );
+    // مزامنة تذكيرات العادات والمهام مع البيانات
+    ref.listen(habitsProvider, (_, next) {
+      final v = next.value;
+      if (v != null) HabitReminders.sync(v);
+    });
+    ref.listen(tasksProvider, (_, next) {
+      final v = next.value;
+      if (v != null) TaskReminders.sync(v);
+    });
 
     return MaterialApp.router(
       title: 'حياتي',
@@ -66,7 +81,9 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
       routerConfig: router,
       builder: (context, child) {
         if (session is SessionLoading) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         // شاشة القفل فوق كل حاجة لما يكون فيه مستخدم داخل
         if (locked && session is! SignedOut) return const LockScreen();

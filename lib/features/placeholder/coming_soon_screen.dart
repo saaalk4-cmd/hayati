@@ -23,12 +23,12 @@ class ComingSoonScreen extends StatelessWidget {
           const SizedBox(height: 24),
           Icon(icon, size: 72, color: scheme.secondary),
           const SizedBox(height: 16),
-          Text('قريبًا إن شاء الله',
-              textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'قريبًا إن شاء الله',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 24),
           Card(
             child: Padding(
@@ -41,8 +41,11 @@ class ComingSoonScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Row(
                         children: [
-                          Icon(Icons.star_rounded,
-                              size: 18, color: scheme.secondary),
+                          Icon(
+                            Icons.star_rounded,
+                            size: 18,
+                            color: scheme.secondary,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(child: Text(f)),
                         ],

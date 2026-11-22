@@ -36,18 +36,21 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
     final lock = ref.read(lockProvider.notifier);
     var bio = false;
     if (await lock.canUseBiometrics() && mounted) {
-      bio = await showDialog<bool>(
+      bio =
+          await showDialog<bool>(
             context: context,
             builder: (c) => AlertDialog(
               title: const Text('تفعيل البصمة؟'),
               content: const Text('تقدر تفتح التطبيق ببصمتك بدل الرمز.'),
               actions: [
                 TextButton(
-                    onPressed: () => Navigator.pop(c, false),
-                    child: const Text('لا')),
+                  onPressed: () => Navigator.pop(c, false),
+                  child: const Text('لا'),
+                ),
                 FilledButton(
-                    onPressed: () => Navigator.pop(c, true),
-                    child: const Text('فعّل')),
+                  onPressed: () => Navigator.pop(c, true),
+                  child: const Text('فعّل'),
+                ),
               ],
             ),
           ) ??
@@ -66,8 +69,12 @@ class _PinSetupScreenState extends ConsumerState<PinSetupScreen> {
         child: Column(
           children: [
             const SizedBox(height: 24),
-            Text(_first == null ? 'اختار رمز من 4 أرقام' : 'اكتب الرمز تاني للتأكيد',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              _first == null
+                  ? 'اختار رمز من 4 أرقام'
+                  : 'اكتب الرمز تاني للتأكيد',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             SizedBox(height: 24, child: _error == null ? null : Text(_error!)),
             const Spacer(),

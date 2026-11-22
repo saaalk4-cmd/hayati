@@ -12,6 +12,7 @@ import 'task.dart';
 abstract class TasksRepository {
   Stream<List<HayatiTask>> watch();
   Future<void> add(String title, {String? dueDate});
+  Future<void> addTask(HayatiTask task);
   Future<void> toggle(HayatiTask task);
   Future<void> delete(String id);
 }
@@ -19,6 +20,9 @@ abstract class TasksRepository {
 List<HayatiTask> _sorted(List<HayatiTask> list) => list
   ..sort((a, b) {
     if (a.done != b.done) return a.done ? 1 : -1;
+    final ad = a.dueDate, bd = b.dueDate;
+    if (ad != null && bd != null && ad != bd) return ad.compareTo(bd);
+    if ((ad == null) != (bd == null)) return ad == null ? 1 : -1;
     return b.createdAt.compareTo(a.createdAt);
   });
 
@@ -34,20 +38,31 @@ class FirestoreTasksRepository implements TasksRepository {
       .collection('tasks');
 
   @override
-  Stream<List<HayatiTask>> watch() => _col.snapshots().map((s) => _sorted(
-      s.docs.map((d) => HayatiTask.fromMap(d.id, d.data())).toList()));
+  Stream<List<HayatiTask>> watch() => _col.snapshots().map(
+    (s) =>
+        _sorted(s.docs.map((d) => HayatiTask.fromMap(d.id, d.data())).toList()),
+  );
 
   @override
-  Future<void> add(String title, {String? dueDate}) => _col.add(HayatiTask(
-        id: '',
-        title: title,
-        dueDate: dueDate,
-        createdAt: DateTime.now(),
-      ).toMap());
+  Future<void> add(String title, {String? dueDate}) => addTask(
+    HayatiTask(
+      id: '',
+      title: title,
+      dueDate: dueDate,
+      createdAt: DateTime.now(),
+    ),
+  );
 
   @override
-  Future<void> toggle(HayatiTask task) =>
-      _col.doc(task.id).update({'done': !task.done});
+  Future<void> addTask(HayatiTask task) => _col.add(task.toMap());
+
+  @override
+  Future<void> toggle(HayatiTask task) async {
+    await _col.doc(task.id).update({'done': !task.done});
+    // المهمة المتكررة: لما تخلص بنضيف النسخة الجاية
+    final next = task.done ? null : task.nextOccurrence('');
+    if (next != null) await _col.add(next.toMap());
+  }
 
   @override
   Future<void> delete(String id) => _col.doc(id).delete();
@@ -64,15 +79,20 @@ class LocalTasksRepository implements TasksRepository {
     final raw = prefs.getString(_key);
     if (raw == null) return [];
     final map = (jsonDecode(raw) as Map<String, dynamic>);
-    return _sorted(map.entries
-        .map((e) =>
-            HayatiTask.fromMap(e.key, e.value as Map<String, dynamic>))
-        .toList());
+    return _sorted(
+      map.entries
+          .map(
+            (e) => HayatiTask.fromMap(e.key, e.value as Map<String, dynamic>),
+          )
+          .toList(),
+    );
   }
 
   Future<void> _write(List<HayatiTask> list) async {
     await prefs.setString(
-        _key, jsonEncode({for (final t in list) t.id: t.toMap()}));
+      _key,
+      jsonEncode({for (final t in list) t.id: t.toMap()}),
+    );
     _controller.add(_read());
   }
 
@@ -83,20 +103,29 @@ class LocalTasksRepository implements TasksRepository {
   }
 
   @override
-  Future<void> add(String title, {String? dueDate}) => _write([
-        ..._read(),
-        HayatiTask(
-          id: const Uuid().v4(),
-          title: title,
-          dueDate: dueDate,
-          createdAt: DateTime.now(),
-        ),
-      ]);
+  Future<void> add(String title, {String? dueDate}) => addTask(
+    HayatiTask(
+      id: '',
+      title: title,
+      dueDate: dueDate,
+      createdAt: DateTime.now(),
+    ),
+  );
 
   @override
-  Future<void> toggle(HayatiTask task) => _write([
-        for (final t in _read()) t.id == task.id ? t.copyWith(done: !t.done) : t
-      ]);
+  Future<void> addTask(HayatiTask task) {
+    final t = HayatiTask.fromMap(const Uuid().v4(), task.toMap());
+    return _write([..._read(), t]);
+  }
+
+  @override
+  Future<void> toggle(HayatiTask task) {
+    final next = task.done ? null : task.nextOccurrence(const Uuid().v4());
+    return _write([
+      for (final t in _read()) t.id == task.id ? t.copyWith(done: !t.done) : t,
+      ?next,
+    ]);
+  }
 
   @override
   Future<void> delete(String id) =>
@@ -110,4 +139,5 @@ final tasksRepositoryProvider = Provider<TasksRepository>((ref) {
 });
 
 final tasksProvider = StreamProvider<List<HayatiTask>>(
-    (ref) => ref.watch(tasksRepositoryProvider).watch());
+  (ref) => ref.watch(tasksRepositoryProvider).watch(),
+);

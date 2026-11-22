@@ -43,9 +43,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           children: [
             const Center(child: BrandMark()),
             const SizedBox(height: 24),
-            Text('حياتي',
-                textAlign: TextAlign.center,
-                style: text.headlineLarge?.copyWith(fontWeight: FontWeight.w800)),
+            Text(
+              'حياتي',
+              textAlign: TextAlign.center,
+              style: text.headlineLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
             const SizedBox(height: 8),
             Text(
               'يومك كله في مكان واحد\nعباداتك، مهامك، فلوسك، وذكرياتك',
@@ -138,7 +140,10 @@ class _EmailSheetState extends ConsumerState<_EmailSheet> {
     try {
       if (_register) {
         await s.registerWithEmail(
-            _name.text.trim(), _email.text.trim(), _password.text);
+          _name.text.trim(),
+          _email.text.trim(),
+          _password.text,
+        );
       } else {
         await s.signInWithEmail(_email.text.trim(), _password.text);
       }
@@ -168,14 +173,20 @@ class _EmailSheetState extends ConsumerState<_EmailSheet> {
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          24, 0, 24, MediaQuery.of(context).viewInsets.bottom + 24),
+        24,
+        0,
+        24,
+        MediaQuery.of(context).viewInsets.bottom + 24,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(_register ? 'حساب جديد' : 'تسجيل الدخول',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            _register ? 'حساب جديد' : 'تسجيل الدخول',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 16),
           if (_register) ...[
             TextField(
@@ -206,15 +217,23 @@ class _EmailSheetState extends ConsumerState<_EmailSheet> {
             onPressed: _busy ? null : _submit,
             child: _busy
                 ? const SizedBox(
-                    width: 22, height: 22, child: CircularProgressIndicator())
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(),
+                  )
                 : Text(_register ? 'إنشاء الحساب' : 'دخول'),
           ),
           TextButton(
             onPressed: () => setState(() => _register = !_register),
-            child: Text(_register ? 'عندي حساب بالفعل' : 'معنديش حساب، عايز أسجّل'),
+            child: Text(
+              _register ? 'عندي حساب بالفعل' : 'معنديش حساب، عايز أسجّل',
+            ),
           ),
           if (!_register)
-            TextButton(onPressed: _forgot, child: const Text('نسيت كلمة المرور')),
+            TextButton(
+              onPressed: _forgot,
+              child: const Text('نسيت كلمة المرور'),
+            ),
         ],
       ),
     );

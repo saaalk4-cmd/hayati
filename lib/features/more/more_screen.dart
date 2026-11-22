@@ -17,12 +17,15 @@ class MoreScreen extends ConsumerWidget {
     final mode = ref.watch(themeModeProvider);
 
     Widget section(String title) => Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-          child: Text(title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w700)),
-        );
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('المزيد')),
@@ -34,8 +37,12 @@ class MoreScreen extends ConsumerWidget {
             title: const Text('مساعد حياتي'),
             onTap: () => context.push('/assistant'),
           ),
+          ListTile(
+            leading: const Icon(Icons.local_fire_department_outlined),
+            title: const Text('عاداتي'),
+            onTap: () => context.push('/more/habits'),
+          ),
           for (final (icon, title, path) in const [
-            (Icons.local_fire_department_outlined, 'عاداتي', '/more/habits'),
             (Icons.book_outlined, 'يومياتي', '/more/journal'),
             (Icons.cake_outlined, 'مناسباتي وأهلي', '/more/occasions'),
             (Icons.insights_outlined, 'إحصائياتي', '/more/stats'),
@@ -61,7 +68,9 @@ class MoreScreen extends ConsumerWidget {
             ),
           ListTile(
             leading: const Icon(Icons.logout),
-            title: Text(session is UserSession ? 'تسجيل الخروج' : 'تسجيل الدخول بحساب'),
+            title: Text(
+              session is UserSession ? 'تسجيل الخروج' : 'تسجيل الدخول بحساب',
+            ),
             onTap: () => ref.read(sessionProvider.notifier).signOut(),
           ),
           section('الأمان والمظهر'),
@@ -72,8 +81,11 @@ class MoreScreen extends ConsumerWidget {
             value: lock.enabled,
             onChanged: (v) {
               if (v) {
-                Navigator.of(context).push(MaterialPageRoute<void>(
-                    builder: (_) => const PinSetupScreen()));
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const PinSetupScreen(),
+                  ),
+                );
               } else {
                 ref.read(lockProvider.notifier).disable();
               }

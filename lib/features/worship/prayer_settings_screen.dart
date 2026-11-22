@@ -19,13 +19,13 @@ class _PrayerSettingsScreenState extends ConsumerState<PrayerSettingsScreen> {
 
   Future<void> _locate() async {
     setState(() => _locating = true);
-    final error =
-        await ref.read(prayerSettingsProvider.notifier).detectLocation();
+    final error = await ref
+        .read(prayerSettingsProvider.notifier)
+        .detectLocation();
     if (!mounted) return;
     setState(() => _locating = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(error ?? 'تم تحديد موقعك ✓')),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(error ?? 'تم تحديد موقعك ✓')));
   }
 
   @override
@@ -44,8 +44,14 @@ class _PrayerSettingsScreenState extends ConsumerState<PrayerSettingsScreen> {
             subtitle: Text(s.placeLabel),
             trailing: _locating
                 ? const SizedBox(
-                    width: 24, height: 24, child: CircularProgressIndicator())
-                : TextButton(onPressed: _locate, child: const Text('حدّد موقعي')),
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(),
+                  )
+                : TextButton(
+                    onPressed: _locate,
+                    child: const Text('حدّد موقعي'),
+                  ),
           ),
           const Divider(),
           ListTile(
@@ -102,8 +108,10 @@ class _PrayerSettingsScreenState extends ConsumerState<PrayerSettingsScreen> {
           const Divider(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Text('مواقيت النهارده',
-                style: Theme.of(context).textTheme.titleSmall),
+            child: Text(
+              'مواقيت النهارده',
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
           ),
           ListTile(
             dense: true,

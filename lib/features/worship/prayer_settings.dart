@@ -39,16 +39,15 @@ class PrayerSettings {
     Madhab? madhab,
     bool? adhanNotifications,
     bool? hasRealLocation,
-  }) =>
-      PrayerSettings(
-        latitude: latitude ?? this.latitude,
-        longitude: longitude ?? this.longitude,
-        placeLabel: placeLabel ?? this.placeLabel,
-        method: method ?? this.method,
-        madhab: madhab ?? this.madhab,
-        adhanNotifications: adhanNotifications ?? this.adhanNotifications,
-        hasRealLocation: hasRealLocation ?? this.hasRealLocation,
-      );
+  }) => PrayerSettings(
+    latitude: latitude ?? this.latitude,
+    longitude: longitude ?? this.longitude,
+    placeLabel: placeLabel ?? this.placeLabel,
+    method: method ?? this.method,
+    madhab: madhab ?? this.madhab,
+    adhanNotifications: adhanNotifications ?? this.adhanNotifications,
+    hasRealLocation: hasRealLocation ?? this.hasRealLocation,
+  );
 }
 
 /// طرق الحساب المعروضة للمستخدم
@@ -100,7 +99,8 @@ class PrayerSettingsController extends Notifier<PrayerSettings> {
     state = s;
   }
 
-  Future<void> setMethod(CalculationMethod m) => _save(state.copyWith(method: m));
+  Future<void> setMethod(CalculationMethod m) =>
+      _save(state.copyWith(method: m));
   Future<void> setMadhab(Madhab m) => _save(state.copyWith(madhab: m));
   Future<void> setAdhan(bool v) => _save(state.copyWith(adhanNotifications: v));
 
@@ -124,13 +124,15 @@ class PrayerSettingsController extends Notifier<PrayerSettings> {
           timeLimit: Duration(seconds: 20),
         ),
       );
-      await _save(state.copyWith(
-        latitude: pos.latitude,
-        longitude: pos.longitude,
-        placeLabel:
-            'موقعك الحالي (${pos.latitude.toStringAsFixed(2)}، ${pos.longitude.toStringAsFixed(2)})',
-        hasRealLocation: true,
-      ));
+      await _save(
+        state.copyWith(
+          latitude: pos.latitude,
+          longitude: pos.longitude,
+          placeLabel:
+              'موقعك الحالي (${pos.latitude.toStringAsFixed(2)}، ${pos.longitude.toStringAsFixed(2)})',
+          hasRealLocation: true,
+        ),
+      );
       return null;
     } catch (_) {
       return 'معرفناش نحدد موقعك، جرّب تاني';
@@ -140,4 +142,5 @@ class PrayerSettingsController extends Notifier<PrayerSettings> {
 
 final prayerSettingsProvider =
     NotifierProvider<PrayerSettingsController, PrayerSettings>(
-        PrayerSettingsController.new);
+      PrayerSettingsController.new,
+    );

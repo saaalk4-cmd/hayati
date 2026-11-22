@@ -43,9 +43,12 @@ class QuranScreen extends ConsumerWidget {
                             Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('${(q.khatmaFraction * 100).toStringAsFixed(0)}%',
-                                    style: text.headlineMedium
-                                        ?.copyWith(fontWeight: FontWeight.w800)),
+                                Text(
+                                  '${(q.khatmaFraction * 100).toStringAsFixed(0)}%',
+                                  style: text.headlineMedium?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
                                 Text('من الختمة', style: text.bodySmall),
                               ],
                             ),
@@ -60,8 +63,12 @@ class QuranScreen extends ConsumerWidget {
                         style: text.titleMedium,
                       ),
                       if (q.khatmas > 0)
-                        Text('ختمت ${q.khatmas} مرة، ما شاء الله 🌿',
-                            style: text.bodyMedium?.copyWith(color: AppColors.gold700)),
+                        Text(
+                          'ختمت ${q.khatmas} مرة، ما شاء الله 🌿',
+                          style: text.bodyMedium?.copyWith(
+                            color: AppColors.gold700,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -77,11 +84,15 @@ class QuranScreen extends ConsumerWidget {
                         goalDone
                             ? 'خلّصت وِرد النهارده ✓ (${q.todayPages} صفحة)'
                             : 'النهارده: ${q.todayPages} من ${q.dailyGoal} صفحات',
-                        style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                        style: text.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       LinearProgressIndicator(
-                        value: (q.todayPages / q.dailyGoal).clamp(0, 1).toDouble(),
+                        value: (q.todayPages / q.dailyGoal)
+                            .clamp(0, 1)
+                            .toDouble(),
                         minHeight: 8,
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -94,7 +105,11 @@ class QuranScreen extends ConsumerWidget {
                             Expanded(
                               child: FilledButton.tonal(
                                 onPressed: () async {
-                                  final finished = await addQuranPages(ref, q, n);
+                                  final finished = await addQuranPages(
+                                    ref,
+                                    q,
+                                    n,
+                                  );
                                   if (finished && context.mounted) {
                                     _celebrate(context);
                                   }
@@ -127,7 +142,8 @@ class QuranScreen extends ConsumerWidget {
                               child: Text(g == 20 ? 'جزء (20 ص)' : '$g صفحات'),
                             ),
                         ],
-                        onChanged: (g) => g == null ? null : setQuranGoal(ref, g),
+                        onChanged: (g) =>
+                            g == null ? null : setQuranGoal(ref, g),
                       ),
                     ),
                     ListTile(
@@ -152,14 +168,23 @@ class QuranScreen extends ConsumerWidget {
         title: const Text('ختمت القرآن 🎉'),
         content: const Text('تقبّل الله منك. هنبدأ ختمة جديدة من أول صفحة.'),
         actions: [
-          FilledButton(onPressed: () => Navigator.pop(c), child: const Text('الحمد لله')),
+          FilledButton(
+            onPressed: () => Navigator.pop(c),
+            child: const Text('الحمد لله'),
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _editPage(BuildContext context, WidgetRef ref, int current) async {
-    final controller = TextEditingController(text: current == 0 ? '' : '$current');
+  Future<void> _editPage(
+    BuildContext context,
+    WidgetRef ref,
+    int current,
+  ) async {
+    final controller = TextEditingController(
+      text: current == 0 ? '' : '$current',
+    );
     final page = await showDialog<int>(
       context: context,
       builder: (c) => AlertDialog(
@@ -170,7 +195,10 @@ class QuranScreen extends ConsumerWidget {
           autofocus: true,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(c), child: const Text('إلغاء')),
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: const Text('إلغاء'),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(c, int.tryParse(controller.text)),
             child: const Text('حفظ'),

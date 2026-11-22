@@ -9,8 +9,10 @@ class ThemeModeController extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
     final v = ref.read(sharedPrefsProvider).getString(_key);
-    return ThemeMode.values.firstWhere((m) => m.name == v,
-        orElse: () => ThemeMode.system);
+    return ThemeMode.values.firstWhere(
+      (m) => m.name == v,
+      orElse: () => ThemeMode.system,
+    );
   }
 
   Future<void> set(ThemeMode mode) async {
@@ -19,5 +21,6 @@ class ThemeModeController extends Notifier<ThemeMode> {
   }
 }
 
-final themeModeProvider =
-    NotifierProvider<ThemeModeController, ThemeMode>(ThemeModeController.new);
+final themeModeProvider = NotifierProvider<ThemeModeController, ThemeMode>(
+  ThemeModeController.new,
+);

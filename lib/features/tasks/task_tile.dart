@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/utils/date_utils.dart';
 import '../../data/task.dart';
 import '../../data/tasks_repository.dart';
 
@@ -29,10 +30,15 @@ class TaskTile extends ConsumerWidget {
           color: task.done ? scheme.onSurface.withValues(alpha: 0.5) : null,
         ),
       ),
+      subtitle: dense ? null : _subtitle(context),
       trailing: task.source == 'assistant'
           ? Tooltip(
               message: 'أضافها المساعد',
-              child: Icon(Icons.auto_awesome, size: 16, color: scheme.secondary),
+              child: Icon(
+                Icons.auto_awesome,
+                size: 16,
+                color: scheme.secondary,
+              ),
             )
           : null,
     );
@@ -49,5 +55,32 @@ class TaskTile extends ConsumerWidget {
       onDismissed: (_) => repo.delete(task.id),
       child: tile,
     );
+  }
+
+  Widget? _subtitle(BuildContext context) {
+    final parts = <String>[
+      if (task.list != 'عام') task.list,
+      if (task.dueDate != null) _dateLabel(task.dueDate!),
+      if (task.remindAt != null)
+        '⏰ ${task.remindAt!.hour.toString().padLeft(2, '0')}:${task.remindAt!.minute.toString().padLeft(2, '0')}',
+      if (task.repeat != TaskRepeat.none) '🔁 ${task.repeat.ar}',
+    ];
+    if (parts.isEmpty) return null;
+    return Text(
+      parts.join(' • '),
+      style: Theme.of(context).textTheme.bodySmall,
+    );
+  }
+
+  String _dateLabel(String key) {
+    final now = DateTime.now();
+    if (key == HayatiDates.dayKey(now)) return 'النهارده';
+    if (key == HayatiDates.dayKey(now.add(const Duration(days: 1)))) {
+      return 'بكرة';
+    }
+    if (key == HayatiDates.dayKey(now.subtract(const Duration(days: 1)))) {
+      return 'امبارح';
+    }
+    return key;
   }
 }

@@ -48,9 +48,11 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
     ref.listen(chatProvider, (_, _) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scroll.hasClients) {
-          _scroll.animateTo(0,
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOut);
+          _scroll.animateTo(
+            0,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
         }
       });
     });
@@ -73,21 +75,21 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
             child: !enabled
                 ? const _Disabled()
                 : chat.messages.isEmpty
-                    ? _Welcome(onPick: _send, suggestions: _suggestions)
-                    : ListView.builder(
-                        controller: _scroll,
-                        reverse: true,
-                        padding: const EdgeInsets.all(16),
-                        itemCount:
-                            chat.messages.length + (chat.sending ? 1 : 0),
-                        itemBuilder: (_, i) {
-                          if (chat.sending && i == 0) return const _Typing();
-                          final idx = chat.messages.length -
-                              1 -
-                              (i - (chat.sending ? 1 : 0));
-                          return _Bubble(message: chat.messages[idx]);
-                        },
-                      ),
+                ? _Welcome(onPick: _send, suggestions: _suggestions)
+                : ListView.builder(
+                    controller: _scroll,
+                    reverse: true,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: chat.messages.length + (chat.sending ? 1 : 0),
+                    itemBuilder: (_, i) {
+                      if (chat.sending && i == 0) return const _Typing();
+                      final idx =
+                          chat.messages.length -
+                          1 -
+                          (i - (chat.sending ? 1 : 0));
+                      return _Bubble(message: chat.messages[idx]);
+                    },
+                  ),
           ),
           SafeArea(
             top: false,
@@ -105,8 +107,10 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
                       onSubmitted: (_) => _send(),
                       decoration: const InputDecoration(
                         hintText: 'اكتب رسالتك...',
-                        contentPadding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -137,9 +141,11 @@ class _Welcome extends StatelessWidget {
       children: [
         const Icon(Icons.auto_awesome, size: 56, color: AppColors.gold500),
         const SizedBox(height: 12),
-        Text('أهلًا! أنا مساعدك في «حياتي»',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge),
+        Text(
+          'أهلًا! أنا مساعدك في «حياتي»',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         const SizedBox(height: 8),
         const Text(
           'أقدر أرتب يومك، أضيف مهام، وأفكّرك باللي ناسيه.',
@@ -186,14 +192,19 @@ class _Bubble extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final user = message.fromUser;
     return Align(
-      alignment: user ? AlignmentDirectional.centerStart : AlignmentDirectional.centerEnd,
+      alignment: user
+          ? AlignmentDirectional.centerStart
+          : AlignmentDirectional.centerEnd,
       child: Container(
-        constraints:
-            BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.8,
+        ),
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: user ? scheme.primary : scheme.secondary.withValues(alpha: 0.18),
+          color: user
+              ? scheme.primary
+              : scheme.secondary.withValues(alpha: 0.18),
           borderRadius: BorderRadius.circular(18),
         ),
         child: Column(
@@ -201,7 +212,10 @@ class _Bubble extends StatelessWidget {
           children: [
             SelectableText(
               message.text,
-              style: TextStyle(color: user ? scheme.onPrimary : null, height: 1.6),
+              style: TextStyle(
+                color: user ? scheme.onPrimary : null,
+                height: 1.6,
+              ),
             ),
             for (final a in message.actions)
               Padding(
@@ -209,9 +223,18 @@ class _Bubble extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.check_circle, size: 16, color: AppColors.emerald500),
+                    const Icon(
+                      Icons.check_circle,
+                      size: 16,
+                      color: AppColors.emerald500,
+                    ),
                     const SizedBox(width: 6),
-                    Flexible(child: Text(a, style: Theme.of(context).textTheme.bodySmall)),
+                    Flexible(
+                      child: Text(
+                        a,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -232,7 +255,10 @@ class _Typing extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.all(12),
         child: SizedBox(
-            width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
       ),
     );
   }
