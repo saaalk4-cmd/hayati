@@ -8,4 +8,6 @@
 - البيانات: `users/{uid}/...` في Firestore. وضع الضيف بيستخدم `SharedPreferences` بنفس الواجهة (`TasksRepository` للمهام، و`UserStore` لأي مستند تاني). أي مجموعة جديدة لازم تتضاف في `firestore.rules`.
 - المساعد: `functions/src/index.ts`. أي قسم جديد يضيف أدوات (`betaZodTool`) تقرأ وتكتب بيانات المستخدم ده بس.
 - المحتوى الديني: متضيفش أي آية أو حديث من غير مرجع واضح (السورة:الآية).
+- أي مجموعة بيانات جديدة لازم تتضاف كمان في `userCollections` في `lib/features/account/account_data.dart` (عشان التصدير) وفي `firestore.rules`.
+- لقطات شاشة للمراجعة: `flutter test test_screens --update-goldens` (النتيجة في `test_screens/out`).
 - قبل أي commit: `flutter analyze` و `flutter test` و `cd functions && npx tsc --noEmit`.

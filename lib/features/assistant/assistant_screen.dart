@@ -276,55 +276,74 @@ class _Bubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final user = message.fromUser;
+    final maxW = MediaQuery.of(context).size.width * 0.8;
     return Align(
       alignment: user
           ? AlignmentDirectional.centerStart
           : AlignmentDirectional.centerEnd,
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.8,
-        ),
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: user
-              ? scheme.primary
-              : scheme.secondary.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SelectableText(
+      child: Column(
+        crossAxisAlignment: user
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.end,
+        children: [
+          Container(
+            constraints: BoxConstraints(maxWidth: maxW),
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: user
+                  ? scheme.primary
+                  : AppColors.gold500.withValues(alpha: 0.14),
+              borderRadius: BorderRadiusDirectional.only(
+                topStart: const Radius.circular(20),
+                topEnd: const Radius.circular(20),
+                bottomStart: Radius.circular(user ? 4 : 20),
+                bottomEnd: Radius.circular(user ? 20 : 4),
+              ),
+            ),
+            child: SelectableText(
               message.text,
               style: TextStyle(
                 color: user ? scheme.onPrimary : null,
-                height: 1.6,
+                height: 1.7,
               ),
             ),
-            for (final a in message.actions)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.check_circle,
-                      size: 16,
-                      color: AppColors.emerald500,
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        a,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ),
-                  ],
+          ),
+          // اللي المساعد عمله فعلًا: كبسولات خضرا تحت الرسالة (زي تصميم Canva)
+          for (final a in message.actions)
+            Container(
+              constraints: BoxConstraints(maxWidth: maxW),
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.emerald100.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppColors.emerald500.withValues(alpha: 0.4),
                 ),
               ),
-          ],
-        ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.check,
+                    size: 16,
+                    color: AppColors.emerald700,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      a,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.emerald900,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
