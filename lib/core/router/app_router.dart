@@ -1,0 +1,137 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
+
+import '../../data/session.dart';
+import '../../features/assistant/assistant_screen.dart';
+import '../../features/auth/login_screen.dart';
+import '../../features/more/more_screen.dart';
+import '../../features/placeholder/coming_soon_screen.dart';
+import '../../features/shell/main_shell.dart';
+import '../../features/tasks/tasks_screen.dart';
+import '../../features/today/today_screen.dart';
+
+/// يخلي GoRouter يعيد تقييم الـ redirect لما الجلسة تتغير
+class _SessionListenable extends ChangeNotifier {
+  void ping() => notifyListeners();
+}
+
+final routerProvider = Provider<GoRouter>((ref) {
+  final listenable = _SessionListenable();
+  ref.listen(sessionProvider, (_, _) => listenable.ping());
+  ref.onDispose(listenable.dispose);
+
+  return GoRouter(
+    initialLocation: '/today',
+    refreshListenable: listenable,
+    redirect: (context, state) {
+      final session = ref.read(sessionProvider);
+      final atLogin = state.matchedLocation == '/login';
+      if (session is SessionLoading) return null;
+      if (session is SignedOut) return atLogin ? null : '/login';
+      if (atLogin) return '/today';
+      return null;
+    },
+    routes: [
+      GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/assistant', builder: (_, _) => const AssistantScreen()),
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, shell) => MainShell(shell: shell),
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/today', builder: (_, _) => const TodayScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/worship',
+              builder: (_, _) => const ComingSoonScreen(
+                title: 'عباداتي',
+                icon: Icons.mosque,
+                features: [
+                  'مواقيت الصلاة حسب موقعك وأذان بإشعار',
+                  'متابعة الصلوات يوميًا',
+                  'الورد اليومي ومتابعة الختمة',
+                  'أذكار الصباح والمساء بعدّاد',
+                  'اتجاه القبلة',
+                ],
+              ),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/tasks', builder: (_, _) => const TasksScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/money',
+              builder: (_, _) => const ComingSoonScreen(
+                title: 'فلوسي',
+                icon: Icons.account_balance_wallet,
+                features: [
+                  'تسجيل مصروف أو دخل في 3 ثواني',
+                  'تصنيفات بأيقونات',
+                  'ميزانية شهرية وتنبيهات',
+                  'أهداف ادخار',
+                  'تقرير شهري برسوم بيانية',
+                ],
+              ),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/more',
+              builder: (_, _) => const MoreScreen(),
+              routes: [
+                GoRoute(
+                  path: 'habits',
+                  builder: (_, _) => const ComingSoonScreen(
+                    title: 'عاداتي',
+                    icon: Icons.local_fire_department,
+                    features: [
+                      'عادات يومية بتذكير',
+                      'سلسلة أيام متتالية (Streak)',
+                      'خريطة حرارية للشهر',
+                    ],
+                  ),
+                ),
+                GoRoute(
+                  path: 'journal',
+                  builder: (_, _) => const ComingSoonScreen(
+                    title: 'يومياتي',
+                    icon: Icons.book,
+                    features: [
+                      'اكتب يومك ومزاجك وضيف صور',
+                      '«في مثل هذا اليوم»',
+                      'قفل بالبصمة',
+                    ],
+                  ),
+                ),
+                GoRoute(
+                  path: 'occasions',
+                  builder: (_, _) => const ComingSoonScreen(
+                    title: 'مناسباتي وأهلي',
+                    icon: Icons.cake,
+                    features: [
+                      'أعياد ميلاد ومناسبات بتذكير',
+                      'تذكير بصلة الرحم',
+                    ],
+                  ),
+                ),
+                GoRoute(
+                  path: 'stats',
+                  builder: (_, _) => const ComingSoonScreen(
+                    title: 'إحصائياتي',
+                    icon: Icons.insights,
+                    features: [
+                      'ملخص أسبوعي وشهري',
+                      'تقرير تقدر تشاركه',
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ]),
+        ],
+      ),
+    ],
+  );
+});
