@@ -92,8 +92,11 @@ StatsResult computeStats({
   var scheduled = 0, hits = 0;
   for (final h in habits) {
     for (final d in days) {
-      final created =
-          DateTime(h.createdAt.year, h.createdAt.month, h.createdAt.day);
+      final created = DateTime(
+        h.createdAt.year,
+        h.createdAt.month,
+        h.createdAt.day,
+      );
       if (!h.isScheduled(d) || d.isBefore(created)) continue;
       scheduled++;
       if (h.isDoneOn(d)) hits++;

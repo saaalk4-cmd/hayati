@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:share_plus/share_plus.dart';
@@ -168,6 +169,14 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
               ),
             ),
           const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: () => context.push(
+              '/assistant?q=${Uri.encodeQueryComponent('لخّصلي أسبوعي وقولّي أتحسن في إيه')}',
+            ),
+            icon: const Icon(Icons.auto_awesome),
+            label: const Text('حلّل أسبوعي مع المساعد'),
+          ),
+          const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: () => SharePlus.instance.share(
               ShareParams(text: s.shareText(_period)),

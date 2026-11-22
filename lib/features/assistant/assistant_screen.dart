@@ -6,7 +6,10 @@ import '../../data/session.dart';
 import 'assistant_service.dart';
 
 class AssistantScreen extends ConsumerStatefulWidget {
-  const AssistantScreen({super.key});
+  const AssistantScreen({super.key, this.initialPrompt});
+
+  /// رسالة بتتبعت تلقائي أول ما الشاشة تفتح (مثلًا «رتّبلي يومي»)
+  final String? initialPrompt;
 
   @override
   ConsumerState<AssistantScreen> createState() => _AssistantScreenState();
@@ -18,12 +21,24 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
 
   static const _suggestions = [
     'رتّبلي يومي النهارده',
+    'لخّصلي أسبوعي',
     'ضيف مهمة: أشتري خضار بكرة',
     'إيه المهام اللي لسه ما خلصتهاش؟',
     'فاضل قد إيه على الصلاة الجاية؟',
     'سجّل إني صليت الضهر في المسجد',
     'قريت 5 صفحات قرآن النهارده',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final q = widget.initialPrompt;
+    if (q != null && q.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (ref.read(sessionProvider) is UserSession) _send(q);
+      });
+    }
+  }
 
   @override
   void dispose() {

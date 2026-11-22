@@ -45,7 +45,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
-      GoRoute(path: '/assistant', builder: (_, _) => const AssistantScreen()),
+      GoRoute(
+        path: '/assistant',
+        builder: (_, state) =>
+            AssistantScreen(initialPrompt: state.uri.queryParameters['q']),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => MainShell(shell: shell),
         branches: [

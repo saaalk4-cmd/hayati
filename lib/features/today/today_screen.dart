@@ -73,7 +73,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
           children: [
             _Header(now: _now, name: name),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            const _PlanMyDayButton(),
+            const SizedBox(height: 12),
             GestureDetector(
               onTap: () => context.go('/worship'),
               child: const NextPrayerHero(compact: true),
@@ -375,6 +377,42 @@ class _UpcomingCard extends ConsumerWidget {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// زرار «رتّبلي يومي» بيفتح المساعد ويبعتله الطلب على طول
+class _PlanMyDayButton extends StatelessWidget {
+  const _PlanMyDayButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.gold500.withValues(alpha: 0.18),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => context.push(
+          '/assistant?q=${Uri.encodeQueryComponent('رتّبلي يومي النهارده')}',
+        ),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Icon(Icons.auto_awesome, color: AppColors.gold700),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'رتّبلي يومي',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              Text('خطة ذكية من Claude', style: TextStyle(fontSize: 12)),
+              Icon(Icons.chevron_left),
+            ],
+          ),
         ),
       ),
     );

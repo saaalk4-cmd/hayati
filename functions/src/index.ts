@@ -68,6 +68,10 @@ const SYSTEM_PROMPT = `أنت «مساعد حياتي»، مساعد شخصي د
 - لما المستخدم يطلب إضافة حاجة، أضفها على طول من غير ما تسأل تأكيد، إلا لو الطلب مش واضح.
 - لما تحدد تاريخ، استخدم الصيغة YYYY-MM-DD واحسبه من تاريخ النهارده المكتوب تحت.
 
+ترتيب اليوم:
+- لما يطلب «رتّبلي يومي» أو «يومي عامل إزاي»: نادِ get_day_overview الأول، وبعدها اعمله خطة قصيرة مرتبة بالوقت حوالين مواعيد الصلاة: المتأخر الأول، بعده المطلوب النهارده، والعادات اللي لسه، وورد القرآن، وأي مناسبة أو حد محتاج يكلمه. خلّي الخطة 5 إلى 8 سطور بالكتير.
+- لما يطلب ملخص الأسبوع: نادِ get_week_summary، وقوله نقطة قوة ونقطة يتحسن فيها، بتشجيع ومن غير لوم.
+
 حدود:
 - تفكّره بالمناسبات الجاية وتضيف أعياد ميلاد ومناسبات، وتشجعه على صلة الرحم وتسجّل لما يكلم حد من أهله. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
 - متألّفش آيات أو أحاديث. لو استشهدت بآية اذكر السورة ورقم الآية، ولو مش متأكد متستشهدش.
@@ -606,7 +610,127 @@ function buildTools(uid: string, actions: string[]) {
     },
   });
 
+  const dayOverview = betaZodTool({
+    name: "get_day_overview",
+    description:
+      "One call that returns everything about the user's day: open tasks (overdue and due that day), habits scheduled that day and which are done, prayer log, Quran pages vs daily goal, money spent that day and month vs budget, upcoming occasions within 7 days, and people they haven't contacted in a while. Call this FIRST when the user asks to plan or organize their day, or asks how their day is going.",
+    inputSchema: z.object({ day: dayKey.describe("The user's local date") }),
+    run: async ({ day }) => {
+      const month = day.slice(0, 7);
+      const [taskSnap, habitSnap, prayerSnap, quranSnap, txSnap, moneySnap, occ, people] = await Promise.all([
+        tasks.where("done", "==", false).limit(200).get(),
+        habits.get(),
+        userDoc.collection("prayers").doc(day).get(),
+        userDoc.collection("quran").doc("progress").get(),
+        transactions.where("month", "==", month).get(),
+        userDoc.collection("money").doc("settings").get(),
+        readItems<OccasionDoc>("occasions"),
+        readItems<PersonDoc>("people"),
+      ]);
+      const open = taskSnap.docs.map((d) => ({ id: d.id, ...(d.data() as TaskDoc) }));
+      const overdue = open.filter((t) => t.dueDate && t.dueDate < day);
+      const dueToday = open.filter((t) => t.dueDate === day);
+      const someday = open.filter((t) => !t.dueDate).slice(0, 10);
+      const wd = weekdayOf(day);
+      const habitList = habitSnap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as HabitDoc) }))
+        .filter((h) => (h.weekdays?.length ? h.weekdays : [1, 2, 3, 4, 5, 6, 7]).includes(wd))
+        .map((h) => ({ id: h.id, title: `${h.emoji} ${h.title}`, done: Boolean(h.done?.[day]), streak: habitStreak(h, day), reminder: h.reminder }));
+      const q = quranSnap.data() ?? {};
+      const qLog = (q.log as Record<string, number> | undefined) ?? {};
+      let spentToday = 0, spentMonth = 0;
+      for (const d of txSnap.docs) {
+        const t = d.data() as { type: string; amount: number; date: string };
+        if (t.type !== "expense") continue;
+        spentMonth += t.amount;
+        if (t.date === day) spentToday += t.amount;
+      }
+      const budget = (moneySnap.data()?.monthlyBudget as number | null | undefined) ?? null;
+      const t0 = new Date(`${day}T00:00:00Z`);
+      const until = (m: number, dd: number) => {
+        let n = new Date(Date.UTC(t0.getUTCFullYear(), m - 1, dd));
+        if (n < t0) n = new Date(Date.UTC(t0.getUTCFullYear() + 1, m - 1, dd));
+        return Math.round((n.getTime() - t0.getTime()) / 86_400_000);
+      };
+      const slim = (t: TaskDoc & { id: string }) => ({ id: t.id, title: t.title, due_date: t.dueDate, list: t.list ?? "عام" });
+      return JSON.stringify({
+        day,
+        tasks: { overdue: overdue.map(slim), due_today: dueToday.map(slim), anytime: someday.map(slim) },
+        habits: habitList,
+        prayers_logged: prayerSnap.data() ?? {},
+        quran: { pages_today: qLog[day] ?? 0, daily_goal: q.dailyGoal ?? 4, khatma_page: q.page ?? 0 },
+        money: { spent_today: spentToday, spent_month: spentMonth, monthly_budget: budget, remaining: budget === null ? null : budget - spentMonth },
+        upcoming_occasions: occ.map((o) => ({ title: o.title, days_until: until(o.month, o.day) })).filter((o) => o.days_until <= 7),
+        people_to_contact: people
+          .filter((p) => p.lastContact && (Date.now() - p.lastContact) / 86_400_000 >= p.everyDays)
+          .map((p) => ({ id: p.id, name: p.name, days_since: Math.floor((Date.now() - (p.lastContact ?? 0)) / 86_400_000) })),
+      });
+    },
+  });
+
+  const weekSummary = betaZodTool({
+    name: "get_week_summary",
+    description:
+      "Summarize the last 7 days ending on the given day: prayers logged per day, habit completion rate, tasks completed vs due, Quran pages, money spent, and average mood. Use for weekly reviews and motivation.",
+    inputSchema: z.object({ end_day: dayKey.describe("Usually the user's local date") }),
+    run: async ({ end_day }) => {
+      const days: string[] = [];
+      const c = new Date(`${end_day}T12:00:00Z`);
+      for (let i = 0; i < 7; i++) {
+        days.unshift(c.toISOString().slice(0, 10));
+        c.setUTCDate(c.getUTCDate() - 1);
+      }
+      const months = [...new Set(days.map((d) => d.slice(0, 7)))];
+      const [prayerDocs, habitSnap, taskSnap, quranSnap, journalSnap, ...txSnaps] = await Promise.all([
+        Promise.all(days.map((d) => userDoc.collection("prayers").doc(d).get())),
+        habits.get(),
+        tasks.where("dueDate", ">=", days[0]).where("dueDate", "<=", end_day).get(),
+        userDoc.collection("quran").doc("progress").get(),
+        journal.where("day", ">=", days[0]).where("day", "<=", end_day).get(),
+        ...months.map((m) => transactions.where("month", "==", m).get()),
+      ]);
+      const prayersPerDay = prayerDocs.map((d, i) => {
+        const data = d.data() ?? {};
+        const values = prayerNames.map((p) => data[p]).filter(Boolean);
+        return { day: days[i], logged: values.filter((v) => v !== "missed").length, mosque: values.filter((v) => v === "mosque").length };
+      });
+      let scheduled = 0, hits = 0;
+      for (const d of habitSnap.docs) {
+        const h = d.data() as HabitDoc;
+        const wds = h.weekdays?.length ? h.weekdays : [1, 2, 3, 4, 5, 6, 7];
+        for (const day of days) {
+          if (!wds.includes(weekdayOf(day))) continue;
+          scheduled++;
+          if (h.done?.[day]) hits++;
+        }
+      }
+      const taskList = taskSnap.docs.map((d) => d.data() as TaskDoc);
+      const qLog = (quranSnap.data()?.log as Record<string, number> | undefined) ?? {};
+      let spent = 0;
+      for (const snap of txSnaps) {
+        for (const d of snap.docs) {
+          const t = d.data() as { type: string; amount: number; date: string };
+          if (t.type === "expense" && days.includes(t.date)) spent += t.amount;
+        }
+      }
+      const moods = journalSnap.docs.map((d) => d.data().mood as number | null).filter((m): m is number => typeof m === "number");
+      return JSON.stringify({
+        days: `${days[0]} → ${end_day}`,
+        prayers_per_day: prayersPerDay,
+        prayers_logged_total: prayersPerDay.reduce((s, d) => s + d.logged, 0),
+        habit_completion_rate: scheduled ? Math.round((hits / scheduled) * 100) : null,
+        tasks_done: taskList.filter((t) => t.done).length,
+        tasks_due: taskList.length,
+        quran_pages: days.reduce((s, d) => s + (qLog[d] ?? 0), 0),
+        spent_egp: spent,
+        average_mood: moods.length ? Math.round((moods.reduce((a, b) => a + b, 0) / moods.length) * 10) / 10 : null,
+      });
+    },
+  });
+
   return [
+    dayOverview,
+    weekSummary,
     listFamily,
     addOccasion,
     logContact,
