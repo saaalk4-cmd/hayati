@@ -61,13 +61,14 @@ const SYSTEM_PROMPT = `أنت «مساعد حياتي»، مساعد شخصي د
 - تسجّل صفحات القرآن اللي قراها وتقوله وصل لفين في الختمة.
 - تشوف عاداته وسلسلة كل عادة (streak)، وتضيف عادات جديدة، وتعلّم على العادة لما يعملها. شجّعه على السلاسل الطويلة من غير مبالغة.
 - تسجّل مصروفاته ودخله بالجنيه المصري، وتعمله ملخص للشهر (صرف كام، على إيه، وفاضل كام من الميزانية)، وتحدد الميزانية. لو قال «صرفت 150 أكل و50 مواصلات» سجّلهم كحركتين.
+- تكتب في يوميات المستخدم (مزاجه وكلامه) لما يطلب، وتقرأها لما يسأل عن مزاجه أو أيامه. اليوميات خاصة جدًا: متجيبش سيرتها إلا لو هو سأل.
 - المهام ليها قوائم (عام، شغل، بيت، مشتريات، دراسة) وممكن تتكرر (كل يوم، كل أسبوع، كل شهر).
 - ترتب يومه وتقترح أولويات وخطط بناءً على مهامه الحقيقية، فاقرأ المهام الأول قبل ما تقترح.
 - لما المستخدم يطلب إضافة حاجة، أضفها على طول من غير ما تسأل تأكيد، إلا لو الطلب مش واضح.
 - لما تحدد تاريخ، استخدم الصيغة YYYY-MM-DD واحسبه من تاريخ النهارده المكتوب تحت.
 
 حدود:
-- الأقسام دي لسه تحت الإنشاء في التطبيق: اليوميات، المناسبات. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
+- قسم المناسبات لسه تحت الإنشاء في التطبيق. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
 - متألّفش آيات أو أحاديث. لو استشهدت بآية اذكر السورة ورقم الآية، ولو مش متأكد متستشهدش.
 - في الأسئلة الطبية أو القانونية أو المالية الكبيرة، قدّم معلومة عامة وانصحه يرجع لمتخصص.`;
 
@@ -473,7 +474,59 @@ function buildTools(uid: string, actions: string[]) {
     },
   });
 
+  const journal = userDoc.collection("journal");
+  const moodAr: Record<number, string> = { 1: "وحش", 2: "مش أحسن حاجة", 3: "عادي", 4: "كويس", 5: "ممتاز" };
+
+  const getJournal = betaZodTool({
+    name: "get_journal",
+    description:
+      "Read the user's private journal entries (mood 1-5, text, gratitude) for a date range. Only use when the user asks about their journal or mood.",
+    inputSchema: z.object({
+      from: dayKey.describe("YYYY-MM-DD inclusive"),
+      to: dayKey.describe("YYYY-MM-DD inclusive"),
+    }),
+    run: async ({ from, to }) => {
+      const snap = await journal.where("day", ">=", from).where("day", "<=", to).limit(62).get();
+      const entries = snap.docs.map((d) => {
+        const e = d.data();
+        return { day: d.id, mood: e.mood ?? null, text: e.text ?? "", gratitude: e.gratitude ?? "" };
+      });
+      return JSON.stringify({ count: entries.length, entries });
+    },
+  });
+
+  const writeJournal = betaZodTool({
+    name: "write_journal",
+    description:
+      "Add to the user's journal for a day: set the mood and/or append text the user dictated. Appends to existing text, never deletes it.",
+    inputSchema: z.object({
+      day: dayKey.describe("YYYY-MM-DD"),
+      mood: z.number().int().min(1).max(5).nullable().describe("1=bad .. 5=great, or null to keep"),
+      text: z.string().max(4000).nullable().describe("Text to append, in the user's words"),
+      gratitude: z.string().max(500).nullable().describe("Something they're grateful for, or null"),
+    }),
+    run: async ({ day, mood, text, gratitude }) => {
+      const ref = journal.doc(day);
+      await db.runTransaction(async (tx) => {
+        const cur = (await tx.get(ref)).data() ?? {};
+        const join = (a: string | undefined, b: string | null) =>
+          b ? (a ? `${a}\n${b}` : b) : (a ?? "");
+        tx.set(ref, {
+          day,
+          mood: mood ?? cur.mood ?? null,
+          text: join(cur.text, text),
+          gratitude: join(cur.gratitude, gratitude),
+          updatedAt: Date.now(),
+        });
+      });
+      actions.push(mood ? `كتبت في يومياتك (المزاج: ${moodAr[mood]})` : "كتبت في يومياتك");
+      return JSON.stringify({ ok: true });
+    },
+  });
+
   return [
+    getJournal,
+    writeJournal,
     addTransaction,
     getMoneySummary,
     setMonthlyBudget,

@@ -39,6 +39,11 @@ service cloud.firestore {
         allow read, write: if isOwner(uid);
       }
 
+      // اليوميات: users/{uid}/journal/{yyyy-MM-dd}
+      match /journal/{day} {
+        allow read, write: if isOwner(uid);
+      }
+
       // سجل الصلوات: users/{uid}/prayers/{yyyy-MM-dd}
       match /prayers/{day} {
         allow read, write: if isOwner(uid);

@@ -4,6 +4,7 @@ import 'package:hayati/data/tasks_repository.dart';
 import 'package:adhan/adhan.dart';
 import 'package:hayati/data/task.dart';
 import 'package:hayati/features/habits/habit.dart';
+import 'package:hayati/features/journal/journal_repository.dart';
 import 'package:hayati/features/lock/pin_pad.dart';
 import 'package:hayati/features/money/money_models.dart';
 import 'package:hayati/features/worship/adhkar_data.dart';
@@ -224,6 +225,27 @@ void main() {
       expect(r.amount, 75);
       expect(r.month, '2026-11');
       expect(r.type, TxType.expense);
+    });
+  });
+
+  group('Journal', () {
+    JournalEntry e(String day, {int? mood, String text = ''}) =>
+        JournalEntry(day: day, mood: mood, text: text, updatedAt: DateTime(2026));
+
+    test('empty entry detection', () {
+      expect(e('2026-11-22').isEmpty, isTrue);
+      expect(e('2026-11-22', mood: 4).isEmpty, isFalse);
+    });
+
+    test('on this day finds last month and last year', () {
+      final all = [
+        e('2026-10-22', text: 'شهر فات'),
+        e('2025-11-22', mood: 5),
+        e('2026-11-21', text: 'امبارح'),
+      ];
+      final found = onThisDay(all, DateTime(2026, 11, 22));
+      expect(found.map((x) => x.$1), containsAll(['من شهر', 'من سنة']));
+      expect(found.length, 2);
     });
   });
 }

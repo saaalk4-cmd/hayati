@@ -7,6 +7,8 @@ import '../../features/assistant/assistant_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/habits/habit_detail_screen.dart';
 import '../../features/habits/habits_screen.dart';
+import '../../features/journal/journal_editor_screen.dart';
+import '../../features/journal/journal_screen.dart';
 import '../../features/money/money_screen.dart';
 import '../../features/more/more_screen.dart';
 import '../../features/placeholder/coming_soon_screen.dart';
@@ -108,15 +110,15 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ),
                   GoRoute(
                     path: 'journal',
-                    builder: (_, _) => const ComingSoonScreen(
-                      title: 'يومياتي',
-                      icon: Icons.book,
-                      features: [
-                        'اكتب يومك ومزاجك وضيف صور',
-                        '«في مثل هذا اليوم»',
-                        'قفل بالبصمة',
-                      ],
-                    ),
+                    builder: (_, _) => const JournalScreen(),
+                    routes: [
+                      GoRoute(
+                        path: ':day',
+                        builder: (_, state) => JournalEditorScreen(
+                          day: state.pathParameters['day']!,
+                        ),
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'occasions',
