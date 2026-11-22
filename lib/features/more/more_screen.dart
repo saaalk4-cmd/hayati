@@ -52,15 +52,11 @@ class MoreScreen extends ConsumerWidget {
             title: const Text('مناسباتي وأهلي'),
             onTap: () => context.push('/more/occasions'),
           ),
-          for (final (icon, title, path) in const [
-            (Icons.insights_outlined, 'إحصائياتي', '/more/stats'),
-          ])
-            ListTile(
-              leading: Icon(icon),
-              title: Text(title),
-              trailing: const Text('قريبًا'),
-              onTap: () => context.push(path),
-            ),
+          ListTile(
+            leading: const Icon(Icons.insights_outlined),
+            title: const Text('إحصائياتي'),
+            onTap: () => context.push('/more/stats'),
+          ),
           section('الحساب'),
           if (session is UserSession)
             ListTile(

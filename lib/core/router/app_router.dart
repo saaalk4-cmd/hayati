@@ -12,8 +12,8 @@ import '../../features/journal/journal_editor_screen.dart';
 import '../../features/journal/journal_screen.dart';
 import '../../features/money/money_screen.dart';
 import '../../features/more/more_screen.dart';
-import '../../features/placeholder/coming_soon_screen.dart';
 import '../../features/shell/main_shell.dart';
+import '../../features/stats/stats_screen.dart';
 import '../../features/tasks/tasks_screen.dart';
 import '../../features/today/today_screen.dart';
 import '../../features/worship/adhkar_screen.dart';
@@ -127,11 +127,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ),
                   GoRoute(
                     path: 'stats',
-                    builder: (_, _) => const ComingSoonScreen(
-                      title: 'إحصائياتي',
-                      icon: Icons.insights,
-                      features: ['ملخص أسبوعي وشهري', 'تقرير تقدر تشاركه'],
-                    ),
+                    builder: (_, _) => const StatsScreen(),
                   ),
                 ],
               ),

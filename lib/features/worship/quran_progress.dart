@@ -24,6 +24,7 @@ class QuranProgress {
     this.khatmas = 0,
     this.dailyGoal = 4,
     this.todayPages = 0,
+    this.log = const {},
   });
 
   /// آخر صفحة اتقرت (0 = لسه ما بدأش)
@@ -31,6 +32,9 @@ class QuranProgress {
   final int khatmas;
   final int dailyGoal;
   final int todayPages;
+
+  /// صفحات اتقرت في كل يوم {yyyy-MM-dd: عدد}
+  final Map<String, int> log;
 
   double get khatmaFraction => page / quranPages;
 }
@@ -46,6 +50,7 @@ final quranProgressProvider = StreamProvider<QuranProgress>((ref) {
       khatmas: (d['khatmas'] as num?)?.toInt() ?? 0,
       dailyGoal: (d['dailyGoal'] as num?)?.toInt() ?? 4,
       todayPages: (log[today] as num?)?.toInt() ?? 0,
+      log: {for (final e in log.entries) e.key: (e.value as num).toInt()},
     );
   });
 });

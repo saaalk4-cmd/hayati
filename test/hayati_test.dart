@@ -8,6 +8,8 @@ import 'package:hayati/features/habits/habit.dart';
 import 'package:hayati/features/journal/journal_repository.dart';
 import 'package:hayati/features/lock/pin_pad.dart';
 import 'package:hayati/features/money/money_models.dart';
+import 'package:hayati/features/stats/stats.dart';
+import 'package:hayati/features/worship/prayer_log.dart';
 import 'package:hayati/features/worship/adhkar_data.dart';
 import 'package:hayati/features/worship/prayer_service.dart';
 import 'package:hayati/features/worship/prayer_settings.dart';
@@ -296,6 +298,86 @@ void main() {
       );
       expect(p.isDue(DateTime(2026, 11, 22)), isTrue);
       expect(p.contactedNow().isDue(DateTime.now()), isFalse);
+    });
+  });
+
+  group('Stats', () {
+    test('compute week stats', () {
+      final days = periodDays(StatsPeriod.week, DateTime(2026, 11, 22));
+      expect(days.length, 7);
+      final r = computeStats(
+        days: days,
+        prayerLogs: {
+          '2026-11-22': {
+            PrayerName.fajr: PrayerStatus.mosque,
+            PrayerName.dhuhr: PrayerStatus.ontime,
+            PrayerName.asr: PrayerStatus.missed,
+          },
+        },
+        habits: [
+          Habit(
+            id: 'h',
+            title: 'x',
+            done: const {'2026-11-22', '2026-11-21'},
+            createdAt: DateTime(2026, 11, 1),
+          ),
+        ],
+        tasks: [
+          HayatiTask(
+            id: '1',
+            title: 'a',
+            dueDate: '2026-11-20',
+            done: true,
+            createdAt: DateTime(2026),
+          ),
+          HayatiTask(
+            id: '2',
+            title: 'b',
+            dueDate: '2026-11-21',
+            createdAt: DateTime(2026),
+          ),
+          HayatiTask(
+            id: '3',
+            title: 'c',
+            dueDate: '2026-10-01',
+            done: true,
+            createdAt: DateTime(2026),
+          ),
+        ],
+        transactions: [
+          Transaction(
+            id: 't',
+            type: TxType.expense,
+            amount: 100,
+            category: 'food',
+            date: '2026-11-22',
+            createdAt: DateTime(2026),
+          ),
+          Transaction(
+            id: 'u',
+            type: TxType.expense,
+            amount: 999,
+            category: 'food',
+            date: '2026-11-01',
+            createdAt: DateTime(2026),
+          ),
+        ],
+        quranLog: const {'2026-11-22': 4, '2026-11-20': 2, '2026-10-01': 50},
+        journal: [
+          JournalEntry(day: '2026-11-22', mood: 4, updatedAt: DateTime(2026)),
+          JournalEntry(day: '2026-11-21', mood: 2, updatedAt: DateTime(2026)),
+        ],
+      );
+      expect(r.prayersDone, 2);
+      expect(r.prayersMosque, 1);
+      expect(r.prayersTotal, 35);
+      expect(r.habitRate, closeTo(2 / 7, 0.001));
+      expect(r.tasksDone, 1);
+      expect(r.tasksTotal, 2);
+      expect(r.spent, 100);
+      expect(r.quranPages, 6);
+      expect(r.avgMood, 3);
+      expect(r.shareText(StatsPeriod.week), contains('حياتي'));
     });
   });
 }
