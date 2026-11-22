@@ -60,13 +60,14 @@ const SYSTEM_PROMPT = `أنت «مساعد حياتي»، مساعد شخصي د
 - تعرف مواقيت الصلاة النهارده (مكتوبة تحت) وتسجّل الصلوات اللي صلاها، وتشوف سجل صلواته.
 - تسجّل صفحات القرآن اللي قراها وتقوله وصل لفين في الختمة.
 - تشوف عاداته وسلسلة كل عادة (streak)، وتضيف عادات جديدة، وتعلّم على العادة لما يعملها. شجّعه على السلاسل الطويلة من غير مبالغة.
+- تسجّل مصروفاته ودخله بالجنيه المصري، وتعمله ملخص للشهر (صرف كام، على إيه، وفاضل كام من الميزانية)، وتحدد الميزانية. لو قال «صرفت 150 أكل و50 مواصلات» سجّلهم كحركتين.
 - المهام ليها قوائم (عام، شغل، بيت، مشتريات، دراسة) وممكن تتكرر (كل يوم، كل أسبوع، كل شهر).
 - ترتب يومه وتقترح أولويات وخطط بناءً على مهامه الحقيقية، فاقرأ المهام الأول قبل ما تقترح.
 - لما المستخدم يطلب إضافة حاجة، أضفها على طول من غير ما تسأل تأكيد، إلا لو الطلب مش واضح.
 - لما تحدد تاريخ، استخدم الصيغة YYYY-MM-DD واحسبه من تاريخ النهارده المكتوب تحت.
 
 حدود:
-- الأقسام دي لسه تحت الإنشاء في التطبيق: الفلوس، اليوميات، المناسبات. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
+- الأقسام دي لسه تحت الإنشاء في التطبيق: اليوميات، المناسبات. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
 - متألّفش آيات أو أحاديث. لو استشهدت بآية اذكر السورة ورقم الآية، ولو مش متأكد متستشهدش.
 - في الأسئلة الطبية أو القانونية أو المالية الكبيرة، قدّم معلومة عامة وانصحه يرجع لمتخصص.`;
 
@@ -381,7 +382,101 @@ function buildTools(uid: string, actions: string[]) {
     },
   });
 
+  const transactions = userDoc.collection("transactions");
+  const expenseCats = [
+    "food", "transport", "bills", "home", "health",
+    "education", "fun", "clothes", "charity", "other",
+  ] as const;
+  const incomeCats = ["salary", "freelance", "gift", "other_income"] as const;
+  const catAr: Record<string, string> = {
+    food: "أكل", transport: "مواصلات", bills: "فواتير", home: "بيت",
+    health: "صحة", education: "تعليم", fun: "ترفيه", clothes: "لبس",
+    charity: "صدقة وهدايا", other: "تانية", salary: "مرتب",
+    freelance: "شغل حر", gift: "هدية", other_income: "دخل تاني",
+  };
+  const monthKey = z.string().regex(/^\d{4}-\d{2}$/);
+
+  const addTransaction = betaZodTool({
+    name: "add_transaction",
+    description:
+      "Record money the user spent (expense) or received (income), in Egyptian pounds. Pick the closest category. One call per item.",
+    inputSchema: z.object({
+      type: z.enum(["expense", "income"]),
+      amount: z.number().positive().max(100_000_000),
+      category: z
+        .enum([...expenseCats, ...incomeCats])
+        .describe("expense: food, transport, bills, home, health, education, fun, clothes, charity, other. income: salary, freelance, gift, other_income"),
+      date: dayKey.describe("YYYY-MM-DD, normally the user's local date"),
+      note: z.string().max(200).nullable().describe("Short description, e.g. غدا مع الشغل"),
+    }),
+    run: async ({ type, amount, category, date, note }) => {
+      const isIncomeCat = (incomeCats as readonly string[]).includes(category);
+      const cat = type === "income"
+        ? (isIncomeCat ? category : "other_income")
+        : (isIncomeCat ? "other" : category);
+      await transactions.add({
+        type, amount, category: cat, date, month: date.slice(0, 7),
+        note, source: "assistant", createdAt: Date.now(),
+      });
+      actions.push(
+        `${type === "expense" ? "سجّلت مصروف" : "سجّلت دخل"}: ${amount} ج.م (${catAr[cat]})`,
+      );
+      return JSON.stringify({ ok: true });
+    },
+  });
+
+  const getMoneySummary = betaZodTool({
+    name: "get_money_summary",
+    description:
+      "Summarize the user's money for a month: total spent, income, monthly budget and what's left, spending per category, and the 15 latest transactions.",
+    inputSchema: z.object({ month: monthKey.describe("YYYY-MM") }),
+    run: async ({ month }) => {
+      const [snap, settings] = await Promise.all([
+        transactions.where("month", "==", month).get(),
+        userDoc.collection("money").doc("settings").get(),
+      ]);
+      let spent = 0, income = 0;
+      const byCat: Record<string, number> = {};
+      const list = snap.docs.map((d) => d.data() as {
+        type: string; amount: number; category: string; date: string; note: string | null;
+      });
+      for (const t of list) {
+        if (t.type === "income") income += t.amount;
+        else {
+          spent += t.amount;
+          byCat[catAr[t.category] ?? t.category] = (byCat[catAr[t.category] ?? t.category] ?? 0) + t.amount;
+        }
+      }
+      const budget = (settings.data()?.monthlyBudget as number | null | undefined) ?? null;
+      const latest = list
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 15)
+        .map((t) => ({ ...t, category: catAr[t.category] ?? t.category }));
+      return JSON.stringify({
+        month, currency: "EGP", spent, income,
+        monthly_budget: budget,
+        remaining_budget: budget === null ? null : budget - spent,
+        spent_by_category: byCat,
+        latest,
+      });
+    },
+  });
+
+  const setMonthlyBudget = betaZodTool({
+    name: "set_monthly_budget",
+    description: "Set (or clear with null) the user's monthly spending budget in EGP.",
+    inputSchema: z.object({ budget: z.number().positive().max(100_000_000).nullable() }),
+    run: async ({ budget }) => {
+      await userDoc.collection("money").doc("settings").set({ monthlyBudget: budget }, { merge: true });
+      actions.push(budget === null ? "شلت الميزانية الشهرية" : `حددت الميزانية: ${budget} ج.م`);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
   return [
+    addTransaction,
+    getMoneySummary,
+    setMonthlyBudget,
     listHabits,
     addHabit,
     checkHabit,

@@ -11,6 +11,10 @@ import '../../data/session.dart';
 import '../../data/tasks_repository.dart';
 import '../tasks/add_task_sheet.dart';
 import '../habits/habits_repository.dart';
+import '../money/add_transaction_sheet.dart';
+import '../money/money_models.dart';
+import '../money/money_repository.dart';
+import '../money/money_screen.dart';
 import '../habits/habits_screen.dart';
 import '../tasks/task_tile.dart';
 import '../worship/prayer_log.dart';
@@ -111,12 +115,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             const SizedBox(height: 12),
             const _HabitsCard(),
             const SizedBox(height: 12),
-            SectionCard(
-              icon: Icons.account_balance_wallet,
-              title: 'مصروف اليوم',
-              onTap: () => context.go('/money'),
-              child: const Text('قريبًا في المرحلة 4 إن شاء الله'),
-            ),
+            const _MoneyCard(),
             const SizedBox(height: 12),
             const _VerseCard(),
           ],
@@ -286,6 +285,47 @@ class _HabitsCard extends ConsumerWidget {
                   HabitCard(habit: h, compact: true),
               ],
             ),
+    );
+  }
+}
+
+/// مصروف النهارده + إضافة سريعة
+class _MoneyCard extends ConsumerWidget {
+  const _MoneyCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = DateTime.now();
+    final today = HayatiDates.dayKey(now);
+    final txs =
+        ref.watch(monthTransactionsProvider(monthKey(now))).value ?? const [];
+    final spentToday = txs
+        .where((t) => t.date == today && t.type == TxType.expense)
+        .fold<double>(0, (s, t) => s + t.amount);
+    final spentMonth = MonthSummary(txs).spent;
+    return SectionCard(
+      icon: Icons.account_balance_wallet,
+      title: 'مصروف النهارده',
+      onTap: () => context.go('/money'),
+      trailing: IconButton(
+        tooltip: 'سجّل مصروف',
+        onPressed: () => showAddTransactionSheet(context),
+        icon: const Icon(Icons.add_circle, color: AppColors.gold500),
+      ),
+      child: Row(
+        children: [
+          Text(
+            formatMoney(spentToday),
+            style: Theme.of(context).textTheme.headlineSmall
+                ?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const Spacer(),
+          Text(
+            'الشهر: ${formatMoney(spentMonth)}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
     );
   }
 }

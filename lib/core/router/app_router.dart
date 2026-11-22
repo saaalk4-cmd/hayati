@@ -7,6 +7,7 @@ import '../../features/assistant/assistant_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/habits/habit_detail_screen.dart';
 import '../../features/habits/habits_screen.dart';
+import '../../features/money/money_screen.dart';
 import '../../features/more/more_screen.dart';
 import '../../features/placeholder/coming_soon_screen.dart';
 import '../../features/shell/main_shell.dart';
@@ -84,20 +85,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(
-                path: '/money',
-                builder: (_, _) => const ComingSoonScreen(
-                  title: 'فلوسي',
-                  icon: Icons.account_balance_wallet,
-                  features: [
-                    'تسجيل مصروف أو دخل في 3 ثواني',
-                    'تصنيفات بأيقونات',
-                    'ميزانية شهرية وتنبيهات',
-                    'أهداف ادخار',
-                    'تقرير شهري برسوم بيانية',
-                  ],
-                ),
-              ),
+              GoRoute(path: '/money', builder: (_, _) => const MoneyScreen()),
             ],
           ),
           StatefulShellBranch(

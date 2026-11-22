@@ -5,6 +5,7 @@ import 'package:adhan/adhan.dart';
 import 'package:hayati/data/task.dart';
 import 'package:hayati/features/habits/habit.dart';
 import 'package:hayati/features/lock/pin_pad.dart';
+import 'package:hayati/features/money/money_models.dart';
 import 'package:hayati/features/worship/adhkar_data.dart';
 import 'package:hayati/features/worship/prayer_service.dart';
 import 'package:hayati/features/worship/prayer_settings.dart';
@@ -184,6 +185,45 @@ void main() {
       expect(t.nextOccurrence('2')!.dueDate!.startsWith('2026-12'), isTrue);
       final once = HayatiTask(id: '3', title: 'x', createdAt: DateTime(2026));
       expect(once.nextOccurrence('4'), isNull);
+    });
+  });
+
+  group('Money', () {
+    Transaction tx(TxType type, double amount, String cat) => Transaction(
+          id: '$amount$cat',
+          type: type,
+          amount: amount,
+          category: cat,
+          date: '2026-11-22',
+          createdAt: DateTime(2026, 11, 22),
+        );
+
+    test('month summary', () {
+      final s = MonthSummary([
+        tx(TxType.expense, 150, 'food'),
+        tx(TxType.expense, 50, 'transport'),
+        tx(TxType.expense, 100, 'food'),
+        tx(TxType.income, 10000, 'salary'),
+      ]);
+      expect(s.spent, 300);
+      expect(s.income, 10000);
+      final cats = s.byCategory();
+      expect(cats.first.$1.id, 'food');
+      expect(cats.first.$2, 250);
+    });
+
+    test('formatMoney', () {
+      expect(formatMoney(1500), '1,500 ج.م');
+      expect(formatMoney(12.5), '12.50 ج.م');
+      expect(formatMoney(1234567), '1,234,567 ج.م');
+    });
+
+    test('transaction map round trip', () {
+      final t = tx(TxType.expense, 75, 'bills');
+      final r = Transaction.fromMap('x', t.toMap());
+      expect(r.amount, 75);
+      expect(r.month, '2026-11');
+      expect(r.type, TxType.expense);
     });
   });
 }

@@ -16,4 +16,4 @@
 
 - الخط: **Cairo**
 - الزوايا: 16 إلى 24px
-- الشعار: مصمَّم على Canva (https://canva.link/6s5ds8l8epxccaz) — الأصل `logo_canva.png`، الأيقونة `app_icon.png`، وداخل التطبيق `brand_mark.png` (`BrandMark`)
+- الشعار: هلال ذهبي حوالين علامة صح، مصمَّم على Canva (https://canva.link/oteu9wzqx3wik6n) — الأصل `logo_canva.png`، الأيقونة `app_icon.png`، وداخل التطبيق `brand_mark.png` (`BrandMark`)

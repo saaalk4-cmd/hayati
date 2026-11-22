@@ -25,6 +25,20 @@ service cloud.firestore {
           && request.resource.data.title.size() <= 120;
       }
 
+      // الفلوس: users/{uid}/transactions/{id}
+      match /transactions/{txId} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid)
+          && request.resource.data.amount is number
+          && request.resource.data.amount > 0
+          && request.resource.data.type in ['expense', 'income'];
+      }
+
+      // إعدادات الفلوس (الميزانية والأهداف): users/{uid}/money/settings
+      match /money/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+
       // سجل الصلوات: users/{uid}/prayers/{yyyy-MM-dd}
       match /prayers/{day} {
         allow read, write: if isOwner(uid);
