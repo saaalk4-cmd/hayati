@@ -3,6 +3,7 @@ import 'package:hayati/core/utils/date_utils.dart';
 import 'package:hayati/data/tasks_repository.dart';
 import 'package:adhan/adhan.dart';
 import 'package:hayati/data/task.dart';
+import 'package:hayati/features/family/family_models.dart';
 import 'package:hayati/features/habits/habit.dart';
 import 'package:hayati/features/journal/journal_repository.dart';
 import 'package:hayati/features/lock/pin_pad.dart';
@@ -58,14 +59,18 @@ void main() {
 
   testWidgets('PinPad reports 4-digit pin', (tester) async {
     String? got;
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PinPad(onCompleted: (pin) async {
-          got = pin;
-          return true;
-        }),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PinPad(
+            onCompleted: (pin) async {
+              got = pin;
+              return true;
+            },
+          ),
+        ),
       ),
-    ));
+    );
     for (final d in ['1', '2', '3', '4']) {
       await tester.tap(find.text(d));
       await tester.pump();
@@ -120,14 +125,16 @@ void main() {
 
   group('Habits', () {
     final today = DateTime(2026, 11, 22); // أحد
-    Habit h(Set<String> done, {Set<int> weekdays = const {1, 2, 3, 4, 5, 6, 7}}) =>
-        Habit(
-          id: 'h',
-          title: 'قراءة',
-          weekdays: weekdays,
-          done: done,
-          createdAt: DateTime(2026, 1, 1),
-        );
+    Habit h(
+      Set<String> done, {
+      Set<int> weekdays = const {1, 2, 3, 4, 5, 6, 7},
+    }) => Habit(
+      id: 'h',
+      title: 'قراءة',
+      weekdays: weekdays,
+      done: done,
+      createdAt: DateTime(2026, 1, 1),
+    );
 
     test('streak counts consecutive days including today', () {
       expect(h({'2026-11-22', '2026-11-21', '2026-11-20'}).streak(today), 3);
@@ -143,11 +150,15 @@ void main() {
 
     test('unscheduled days are skipped', () {
       // الجمعة (5) مش مجدولة، فالسلسلة بتعدّي عليها
-      final habit = h({'2026-11-22', '2026-11-20'},
-          weekdays: const {1, 2, 3, 4, 6, 7});
+      final habit = h(
+        {'2026-11-22', '2026-11-20'},
+        weekdays: const {1, 2, 3, 4, 6, 7},
+      );
       expect(habit.streak(today), 1); // السبت 21 مجدول ومش متعمل
-      final habit2 = h({'2026-11-22', '2026-11-21', '2026-11-19'},
-          weekdays: const {1, 2, 3, 4, 6, 7});
+      final habit2 = h(
+        {'2026-11-22', '2026-11-21', '2026-11-19'},
+        weekdays: const {1, 2, 3, 4, 6, 7},
+      );
       expect(habit2.streak(today), 3);
     });
 
@@ -191,13 +202,13 @@ void main() {
 
   group('Money', () {
     Transaction tx(TxType type, double amount, String cat) => Transaction(
-          id: '$amount$cat',
-          type: type,
-          amount: amount,
-          category: cat,
-          date: '2026-11-22',
-          createdAt: DateTime(2026, 11, 22),
-        );
+      id: '$amount$cat',
+      type: type,
+      amount: amount,
+      category: cat,
+      date: '2026-11-22',
+      createdAt: DateTime(2026, 11, 22),
+    );
 
     test('month summary', () {
       final s = MonthSummary([
@@ -229,8 +240,12 @@ void main() {
   });
 
   group('Journal', () {
-    JournalEntry e(String day, {int? mood, String text = ''}) =>
-        JournalEntry(day: day, mood: mood, text: text, updatedAt: DateTime(2026));
+    JournalEntry e(String day, {int? mood, String text = ''}) => JournalEntry(
+      day: day,
+      mood: mood,
+      text: text,
+      updatedAt: DateTime(2026),
+    );
 
     test('empty entry detection', () {
       expect(e('2026-11-22').isEmpty, isTrue);
@@ -246,6 +261,41 @@ void main() {
       final found = onThisDay(all, DateTime(2026, 11, 22));
       expect(found.map((x) => x.$1), containsAll(['من شهر', 'من سنة']));
       expect(found.length, 2);
+    });
+  });
+
+  group('Family', () {
+    test('occasion days until and age', () {
+      const o = Occasion(
+        id: '1',
+        title: 'عيد ميلاد ماما',
+        type: OccasionType.birthday,
+        month: 11,
+        day: 25,
+        year: 1970,
+      );
+      final now = DateTime(2026, 11, 22, 15);
+      expect(o.daysUntil(now), 3);
+      expect(o.yearsAtNext(now), 56);
+      const passed = Occasion(
+        id: '2',
+        title: 'x',
+        type: OccasionType.other,
+        month: 1,
+        day: 1,
+      );
+      expect(passed.nextDate(now), DateTime(2027, 1, 1));
+    });
+
+    test('person due', () {
+      final p = Person(
+        id: '1',
+        name: 'خالتي',
+        everyDays: 7,
+        lastContact: DateTime(2026, 11, 10),
+      );
+      expect(p.isDue(DateTime(2026, 11, 22)), isTrue);
+      expect(p.contactedNow().isDue(DateTime.now()), isFalse);
     });
   });
 }

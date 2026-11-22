@@ -3,6 +3,12 @@ name: Build
 on:
   push:
     branches: [main]
+    # تعديل الوثائق بس مش محتاج بناء APK
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "assets/brand/logo_options/**"
+      - "assets/brand/screens/**"
   pull_request:
   workflow_dispatch:
 

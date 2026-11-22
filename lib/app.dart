@@ -6,6 +6,8 @@ import 'core/theme/app_theme.dart';
 import 'data/session.dart';
 import 'data/settings.dart';
 import 'features/lock/lock_screen.dart';
+import 'features/family/family_models.dart';
+import 'features/family/occasion_reminders.dart';
 import 'features/habits/habit_reminders.dart';
 import 'features/habits/habits_repository.dart';
 import 'features/lock/lock_service.dart';
@@ -63,6 +65,10 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
     ref.listen(habitsProvider, (_, next) {
       final v = next.value;
       if (v != null) HabitReminders.sync(v);
+    });
+    ref.listen(occasionsProvider, (_, next) {
+      final v = next.value;
+      if (v != null) OccasionReminders.sync(v);
     });
     ref.listen(tasksProvider, (_, next) {
       final v = next.value;

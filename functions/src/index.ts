@@ -5,6 +5,7 @@
  * write the signed-in user's own data in Firestore (users/{uid}/...).
  * The Claude API key lives only here, as a Firebase secret.
  */
+import crypto from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import { initializeApp } from "firebase-admin/app";
@@ -68,7 +69,7 @@ const SYSTEM_PROMPT = `أنت «مساعد حياتي»، مساعد شخصي د
 - لما تحدد تاريخ، استخدم الصيغة YYYY-MM-DD واحسبه من تاريخ النهارده المكتوب تحت.
 
 حدود:
-- قسم المناسبات لسه تحت الإنشاء في التطبيق. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
+- تفكّره بالمناسبات الجاية وتضيف أعياد ميلاد ومناسبات، وتشجعه على صلة الرحم وتسجّل لما يكلم حد من أهله. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
 - متألّفش آيات أو أحاديث. لو استشهدت بآية اذكر السورة ورقم الآية، ولو مش متأكد متستشهدش.
 - في الأسئلة الطبية أو القانونية أو المالية الكبيرة، قدّم معلومة عامة وانصحه يرجع لمتخصص.`;
 
@@ -524,7 +525,91 @@ function buildTools(uid: string, actions: string[]) {
     },
   });
 
+  const familyCol = userDoc.collection("family");
+  type OccasionDoc = { id: string; title: string; type: string; month: number; day: number; year: number | null; remindDaysBefore: number };
+  type PersonDoc = { id: string; name: string; relation: string; everyDays: number; lastContact: number | null };
+  const readItems = async <T,>(doc: string): Promise<T[]> =>
+    (((await familyCol.doc(doc).get()).data()?.items as T[] | undefined) ?? []);
+
+  const listFamily = betaZodTool({
+    name: "list_occasions_and_people",
+    description:
+      "List the user's yearly occasions (birthdays, anniversaries) with days until each, and the people they want to keep in touch with (silat al-rahim) with days since last contact.",
+    inputSchema: z.object({ today: dayKey.describe("The user's local date") }),
+    run: async ({ today }) => {
+      const [occ, people] = await Promise.all([
+        readItems<OccasionDoc>("occasions"),
+        readItems<PersonDoc>("people"),
+      ]);
+      const t = new Date(`${today}T00:00:00Z`);
+      const daysUntil = (m: number, d: number) => {
+        let next = new Date(Date.UTC(t.getUTCFullYear(), m - 1, d));
+        if (next < t) next = new Date(Date.UTC(t.getUTCFullYear() + 1, m - 1, d));
+        return Math.round((next.getTime() - t.getTime()) / 86_400_000);
+      };
+      return JSON.stringify({
+        occasions: occ.map((o) => ({ title: o.title, type: o.type, date: `${o.month}/${o.day}`, days_until: daysUntil(o.month, o.day) }))
+          .sort((a, b) => a.days_until - b.days_until),
+        people: people.map((p) => ({
+          id: p.id, name: p.name, relation: p.relation, every_days: p.everyDays,
+          days_since_contact: p.lastContact ? Math.floor((Date.now() - p.lastContact) / 86_400_000) : null,
+        })),
+      });
+    },
+  });
+
+  const addOccasion = betaZodTool({
+    name: "add_occasion",
+    description: "Add a yearly occasion (birthday, anniversary, other) with a reminder.",
+    inputSchema: z.object({
+      title: z.string().min(1).max(120).describe("e.g. عيد ميلاد ماما"),
+      type: z.enum(["birthday", "anniversary", "other"]),
+      month: z.number().int().min(1).max(12),
+      day: z.number().int().min(1).max(31),
+      year: z.number().int().min(1900).max(2100).nullable().describe("Birth/start year if known"),
+      remind_days_before: z.number().int().min(0).max(30),
+    }),
+    run: async ({ title, type, month, day, year, remind_days_before }) => {
+      const items = await readItems<OccasionDoc>("occasions");
+      items.push({ id: crypto.randomUUID(), title, type, month, day, year, remindDaysBefore: remind_days_before });
+      await familyCol.doc("occasions").set({ items }, { merge: true });
+      actions.push(`أضفت مناسبة: ${title} (${day}/${month})`);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
+  const logContact = betaZodTool({
+    name: "log_contact",
+    description:
+      "Record that the user just contacted someone from their people list (by id from list_occasions_and_people), or add a new person to keep in touch with when person_id is null.",
+    inputSchema: z.object({
+      person_id: z.string().max(100).nullable(),
+      new_person_name: z.string().max(80).nullable().describe("Only when adding a new person"),
+      relation: z.string().max(40).nullable(),
+      every_days: z.number().int().min(1).max(365).nullable().describe("How often they want to contact them"),
+    }),
+    run: async ({ person_id, new_person_name, relation, every_days }) => {
+      const items = await readItems<PersonDoc>("people");
+      if (person_id) {
+        const p = items.find((x) => x.id === person_id);
+        if (!p) return JSON.stringify({ ok: false, error: "not_found" });
+        p.lastContact = Date.now();
+        actions.push(`سجّلت إنك كلمت ${p.name} 💚`);
+      } else if (new_person_name) {
+        items.push({ id: crypto.randomUUID(), name: new_person_name, relation: relation ?? "", everyDays: every_days ?? 14, lastContact: null });
+        actions.push(`أضفت ${new_person_name} لصلة الرحم`);
+      } else {
+        return JSON.stringify({ ok: false, error: "need person_id or new_person_name" });
+      }
+      await familyCol.doc("people").set({ items }, { merge: true });
+      return JSON.stringify({ ok: true });
+    },
+  });
+
   return [
+    listFamily,
+    addOccasion,
+    logContact,
     getJournal,
     writeJournal,
     addTransaction,

@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../data/session.dart';
 import '../../features/assistant/assistant_screen.dart';
 import '../../features/auth/login_screen.dart';
+import '../../features/family/family_screen.dart';
 import '../../features/habits/habit_detail_screen.dart';
 import '../../features/habits/habits_screen.dart';
 import '../../features/journal/journal_editor_screen.dart';
@@ -122,14 +123,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ),
                   GoRoute(
                     path: 'occasions',
-                    builder: (_, _) => const ComingSoonScreen(
-                      title: 'مناسباتي وأهلي',
-                      icon: Icons.cake,
-                      features: [
-                        'أعياد ميلاد ومناسبات بتذكير',
-                        'تذكير بصلة الرحم',
-                      ],
-                    ),
+                    builder: (_, _) => const FamilyScreen(),
                   ),
                   GoRoute(
                     path: 'stats',

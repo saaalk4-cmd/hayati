@@ -10,6 +10,7 @@ import '../../core/widgets/section_card.dart';
 import '../../data/session.dart';
 import '../../data/tasks_repository.dart';
 import '../tasks/add_task_sheet.dart';
+import '../family/family_models.dart';
 import '../habits/habits_repository.dart';
 import '../money/add_transaction_sheet.dart';
 import '../money/money_models.dart';
@@ -116,6 +117,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             const _HabitsCard(),
             const SizedBox(height: 12),
             const _MoneyCard(),
+            const _UpcomingCard(),
             const SizedBox(height: 12),
             const _VerseCard(),
           ],
@@ -325,6 +327,55 @@ class _MoneyCard extends ConsumerWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// مناسبات قريبة (خلال أسبوع) وناس وحشوك — بيظهر بس لو فيه حاجة
+class _UpcomingCard extends ConsumerWidget {
+  const _UpcomingCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = DateTime.now();
+    final occasions = (ref.watch(occasionsProvider).value ?? const [])
+        .where((o) => o.daysUntil(now) <= 7)
+        .toList();
+    final due = (ref.watch(peopleProvider).value ?? const [])
+        .where((p) => p.isDue(now) && p.lastContact != null)
+        .take(3)
+        .toList();
+    if (occasions.isEmpty && due.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: SectionCard(
+        icon: Icons.cake,
+        title: 'قريب',
+        onTap: () => context.push('/more/occasions'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final o in occasions)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text(
+                  '${o.type.emoji} ${o.title} • ${o.daysUntil(now) == 0
+                      ? 'النهارده'
+                      : o.daysUntil(now) == 1
+                      ? 'بكرة'
+                      : 'بعد ${o.daysUntil(now)} أيام'}',
+                ),
+              ),
+            for (final p in due)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text(
+                  '💚 بقالك ${p.daysSince(now)} يوم ما كلمتش ${p.name}',
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
