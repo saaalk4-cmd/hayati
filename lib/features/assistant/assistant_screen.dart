@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../data/session.dart';
@@ -18,6 +19,64 @@ class AssistantScreen extends ConsumerStatefulWidget {
 class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
+  final _speech = SpeechToText();
+  bool _listening = false;
+
+  /// اضغط على المايك وقول طلبك بالعربي، والكلام بيتكتب في الخانة
+  Future<void> _toggleVoice() async {
+    if (_listening) {
+      await _speech.stop();
+      setState(() => _listening = false);
+      return;
+    }
+    final ok = await _speech.initialize(
+      onStatus: (s) {
+        if ((s == 'done' || s == 'notListening') && mounted) {
+          setState(() => _listening = false);
+        }
+      },
+      onError: (_) {
+        if (mounted) setState(() => _listening = false);
+      },
+    );
+    if (!ok) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('الكلام بالصوت مش متاح، اتأكد من إذن المايك'),
+          ),
+        );
+      }
+      return;
+    }
+    final locales = await _speech.locales();
+    final arabic =
+        locales
+            .where(
+              (l) =>
+                  l.localeId.startsWith('ar_EG') ||
+                  l.localeId.startsWith('ar-EG'),
+            )
+            .firstOrNull ??
+        locales.where((l) => l.localeId.startsWith('ar')).firstOrNull;
+    setState(() => _listening = true);
+    await _speech.listen(
+      onResult: (r) {
+        _input.text = r.recognizedWords;
+        _input.selection = TextSelection.collapsed(offset: _input.text.length);
+        if (r.finalResult && r.recognizedWords.trim().isNotEmpty) {
+          setState(() => _listening = false);
+          _send();
+        }
+      },
+      listenOptions: SpeechListenOptions(
+        localeId: arabic?.localeId,
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 3),
+        partialResults: true,
+      ),
+    );
+  }
 
   static const _suggestions = [
     'رتّبلي يومي النهارده',
@@ -42,6 +101,7 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
 
   @override
   void dispose() {
+    _speech.cancel();
     _input.dispose();
     _scroll.dispose();
     super.dispose();
@@ -120,16 +180,26 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
                       maxLines: 5,
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _send(),
-                      decoration: const InputDecoration(
-                        hintText: 'اكتب رسالتك...',
-                        contentPadding: EdgeInsets.symmetric(
+                      decoration: InputDecoration(
+                        hintText: _listening
+                            ? 'بسمعك... 🎙️'
+                            : 'اكتب أو اتكلم...',
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    tooltip: 'كلّمه بصوتك',
+                    onPressed: enabled && !chat.sending ? _toggleVoice : null,
+                    icon: Icon(
+                      _listening ? Icons.stop_circle : Icons.mic_none,
+                      color: _listening ? AppColors.danger : AppColors.gold700,
+                    ),
+                  ),
                   IconButton.filled(
                     onPressed: enabled && !chat.sending ? _send : null,
                     icon: const Icon(Icons.send_rounded),
