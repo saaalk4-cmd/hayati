@@ -12,6 +12,7 @@ import '../../features/journal/journal_editor_screen.dart';
 import '../../features/journal/journal_screen.dart';
 import '../../features/money/money_screen.dart';
 import '../../features/more/more_screen.dart';
+import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/shell/main_shell.dart';
 import '../../features/stats/stats_screen.dart';
 import '../../features/tasks/tasks_screen.dart';
@@ -30,6 +31,7 @@ class _SessionListenable extends ChangeNotifier {
 final routerProvider = Provider<GoRouter>((ref) {
   final listenable = _SessionListenable();
   ref.listen(sessionProvider, (_, _) => listenable.ping());
+  ref.listen(onboardedProvider, (_, _) => listenable.ping());
   ref.onDispose(listenable.dispose);
 
   return GoRouter(
@@ -38,6 +40,11 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final session = ref.read(sessionProvider);
       final atLogin = state.matchedLocation == '/login';
+      final atOnboarding = state.matchedLocation == '/onboarding';
+      if (!ref.read(onboardedProvider)) {
+        return atOnboarding ? null : '/onboarding';
+      }
+      if (atOnboarding) return '/today';
       if (session is SessionLoading) return null;
       if (session is SignedOut) return atLogin ? null : '/login';
       if (atLogin) return '/today';
@@ -45,6 +52,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+      GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
       GoRoute(
         path: '/assistant',
         builder: (_, state) =>

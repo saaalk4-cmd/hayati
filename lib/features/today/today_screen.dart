@@ -12,6 +12,7 @@ import '../../data/tasks_repository.dart';
 import '../tasks/add_task_sheet.dart';
 import '../family/family_models.dart';
 import '../habits/habits_repository.dart';
+import '../onboarding/onboarding_screen.dart';
 import '../money/add_transaction_sheet.dart';
 import '../money/money_models.dart';
 import '../money/money_repository.dart';
@@ -51,9 +52,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
-    final name = session is UserSession
-        ? (session.name?.split(' ').first ?? '')
-        : '';
+    final local = ref.watch(localNameProvider);
+    final name = session is UserSession && (session.name?.isNotEmpty ?? false)
+        ? session.name!.split(' ').first
+        : (local ?? '');
     final today = HayatiDates.dayKey(_now);
     final tasks = ref.watch(tasksProvider).value ?? const [];
     final todays = tasks

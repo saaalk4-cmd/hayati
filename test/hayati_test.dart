@@ -8,6 +8,9 @@ import 'package:hayati/features/habits/habit.dart';
 import 'package:hayati/features/journal/journal_repository.dart';
 import 'package:hayati/features/lock/pin_pad.dart';
 import 'package:hayati/features/money/money_models.dart';
+import 'package:hayati/features/onboarding/onboarding_screen.dart';
+import 'package:hayati/data/session.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hayati/features/stats/stats.dart';
 import 'package:hayati/features/worship/prayer_log.dart';
 import 'package:hayati/features/worship/adhkar_data.dart';
@@ -379,5 +382,28 @@ void main() {
       expect(r.avgMood, 3);
       expect(r.shareText(StatsPeriod.week), contains('حياتي'));
     });
+  });
+
+  testWidgets('onboarding saves name and finishes', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [sharedPrefsProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: OnboardingScreen()),
+      ),
+    );
+    expect(container.read(onboardedProvider), isFalse);
+    await tester.tap(find.text('تخطّي'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'أحمد');
+    await tester.tap(find.text('يلا نبدأ'));
+    await tester.pumpAndSettle();
+    expect(container.read(onboardedProvider), isTrue);
+    expect(prefs.getString(userNameKey), 'أحمد');
   });
 }
