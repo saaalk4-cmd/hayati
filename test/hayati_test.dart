@@ -141,7 +141,7 @@ void main() {
 
     test('unscheduled days are skipped', () {
       // الجمعة (5) مش مجدولة، فالسلسلة بتعدّي عليها
-      final habit = h({'2026-11-22', '2026-11-22', '2026-11-20'},
+      final habit = h({'2026-11-22', '2026-11-20'},
           weekdays: const {1, 2, 3, 4, 6, 7});
       expect(habit.streak(today), 1); // السبت 21 مجدول ومش متعمل
       final habit2 = h({'2026-11-22', '2026-11-21', '2026-11-19'},
