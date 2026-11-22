@@ -4,6 +4,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../data/session.dart';
 import '../../data/settings.dart';
+import '../account/account_data.dart';
+import '../account/privacy_screen.dart';
 import '../lock/lock_service.dart';
 import '../lock/pin_setup_screen.dart';
 
@@ -110,11 +112,85 @@ class MoreScreen extends ConsumerWidget {
                   ref.read(themeModeProvider.notifier).set(s.first),
             ),
           ),
+          section('بياناتي'),
+          ListTile(
+            leading: const Icon(Icons.download_outlined),
+            title: const Text('تصدير بياناتي'),
+            subtitle: const Text('ملف فيه كل حاجة سجّلتها'),
+            onTap: () async {
+              try {
+                await exportMyData(ref);
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('تعذّر التصدير، جرّب تاني')),
+                  );
+                }
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text('الخصوصية'),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const PrivacyScreen()),
+            ),
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.delete_forever_outlined,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            title: Text(
+              session is UserSession
+                  ? 'حذف حسابي وكل بياناتي'
+                  : 'مسح كل البيانات من الموبايل',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+            onTap: () => _confirmDelete(context, ref),
+          ),
           const SizedBox(height: 24),
           const Center(child: Text('حياتي • الإصدار 0.1.0')),
           const SizedBox(height: 24),
         ],
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: const Text('متأكد؟'),
+        content: const Text(
+          'كل مهامك وعاداتك وصلواتك وفلوسك ويومياتك هتتمسح نهائيًا، ومش هينفع ترجعها. يُفضّل تصدّر بياناتك الأول.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(d, false),
+            child: const Text('لا، رجوع'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(d).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(d, true),
+            child: const Text('امسح نهائيًا'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await deleteMyAccount(ref);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('تعذّر الحذف، اتأكد من النت وجرّب تاني'),
+          ),
+        );
+      }
+    }
   }
 }
