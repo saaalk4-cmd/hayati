@@ -59,6 +59,11 @@ service cloud.firestore {
         allow read, write: if isOwner(uid);
       }
 
+      // محادثة المساعد المحفوظة: users/{uid}/assistant/chat
+      match /assistant/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+
       // سجل الصلوات: users/{uid}/prayers/{yyyy-MM-dd}
       match /prayers/{day} {
         allow read, write: if isOwner(uid);

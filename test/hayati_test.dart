@@ -8,6 +8,7 @@ import 'package:hayati/features/habits/habit.dart';
 import 'package:hayati/features/journal/journal_repository.dart';
 import 'package:hayati/features/lock/pin_pad.dart';
 import 'package:hayati/features/money/money_models.dart';
+import 'package:hayati/features/assistant/assistant_service.dart';
 import 'package:hayati/features/money/money_repository.dart';
 import 'package:hayati/features/money/money_screen.dart';
 import 'package:hayati/features/onboarding/onboarding_screen.dart';
@@ -646,5 +647,53 @@ void main() {
     expect(lines.first, startsWith('التاريخ'));
     expect(lines[1], contains('"غدا, مع الشغل"'));
     expect(lines[1], contains('أكل'));
+  });
+
+  group('Assistant memory', () {
+    test('chat message map round trip', () {
+      const m = ChatMessage(
+        fromUser: false,
+        text: 'تمام',
+        actions: ['أضفت مهمة'],
+      );
+      final r = ChatMessage.fromMap(m.toMap());
+      expect(r.text, 'تمام');
+      expect(r.fromUser, isFalse);
+      expect(r.actions, ['أضفت مهمة']);
+    });
+
+    test('saved chat loads on start', () async {
+      SharedPreferences.setMockInitialValues({
+        'store/assistant/chat': '{"messages":[{"u":true,"t":"رتّبلي يومي"},{"u":false,"t":"حاضر","a":["x"]}]}',
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final c = ProviderContainer(
+        overrides: [
+          sharedPrefsProvider.overrideWithValue(prefs),
+          firebaseReadyProvider.overrideWithValue(false),
+        ],
+      );
+      addTearDown(c.dispose);
+      c.read(chatProvider);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      final msgs = c.read(chatProvider).messages;
+      expect(msgs.length, 2);
+      expect(msgs.last.actions, ['x']);
+    });
+
+    test('smart suggestions depend on time', () {
+      expect(
+        smartSuggestions(DateTime(2026, 11, 23, 8)),
+        contains('رتّبلي يومي النهارده'),
+      );
+      expect(
+        smartSuggestions(DateTime(2026, 11, 23, 21)),
+        contains('لخّصلي يومي'),
+      );
+      expect(
+        smartSuggestions(DateTime(2026, 11, 27, 9)),
+        contains('ضيف مهمة: قراءة سورة الكهف'),
+      );
+    });
   });
 }

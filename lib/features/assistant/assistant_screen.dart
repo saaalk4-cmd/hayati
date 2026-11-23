@@ -78,16 +78,6 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
     );
   }
 
-  static const _suggestions = [
-    'رتّبلي يومي النهارده',
-    'لخّصلي أسبوعي',
-    'ضيف مهمة: أشتري خضار بكرة',
-    'إيه المهام اللي لسه ما خلصتهاش؟',
-    'فاضل قد إيه على الصلاة الجاية؟',
-    'سجّل إني صليت الضهر في المسجد',
-    'قريت 5 صفحات قرآن النهارده',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -150,7 +140,10 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
             child: !enabled
                 ? const _Disabled()
                 : chat.messages.isEmpty
-                ? _Welcome(onPick: _send, suggestions: _suggestions)
+                ? _Welcome(
+                    onPick: _send,
+                    suggestions: smartSuggestions(DateTime.now()),
+                  )
                 : ListView.builder(
                     controller: _scroll,
                     reverse: true,
