@@ -160,14 +160,25 @@ class _Header extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            name.isEmpty
-                ? HayatiDates.greeting(now)
-                : '${HayatiDates.greeting(now)} يا $name',
-            style: text.headlineSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  name.isEmpty
+                      ? HayatiDates.greeting(now)
+                      : '${HayatiDates.greeting(now)} يا $name',
+                  style: text.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'بحث',
+                onPressed: () => context.push('/search'),
+                icon: const Icon(Icons.search, color: Colors.white70),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(

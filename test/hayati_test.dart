@@ -28,6 +28,7 @@ import 'package:hayati/features/worship/quran_progress.dart';
 import 'package:hayati/features/worship/qada.dart';
 import 'package:hayati/features/worship/islamic_occasions.dart';
 import 'package:hayati/features/goals/goals.dart';
+import 'package:hayati/features/search/global_search.dart';
 import 'package:hayati/features/money/money_analytics.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:material_ui/material_ui.dart';
@@ -802,5 +803,16 @@ void main() {
     expect(dailyAverage(500, DateTime(2026, 2), DateTime(2026, 2, 10)), 50);
     // شهر خلص: على كل أيامه
     expect(dailyAverage(310, DateTime(2026, 1), DateTime(2026, 2, 10)), 10);
+  });
+
+  test('البحث: توحيد الكتابة العربية والمقتطف', () {
+    expect(normalizeArabic('أُسْرة'), 'اسره');
+    expect(matchesQuery('اجتماع الشغل مع أحمد', 'احمد اجتماع'), isTrue);
+    expect(matchesQuery('مستشفى', 'مستشفي'), isTrue);
+    expect(matchesQuery('شراء خضار', 'لحمة'), isFalse);
+    expect(matchesQuery('أي حاجة', '   '), isFalse);
+    final s = snippet('${'كلام ' * 30}المفتاح هنا ${'تاني ' * 30}', 'المفتاح');
+    expect(s, contains('المفتاح'));
+    expect(s.startsWith('…'), isTrue);
   });
 }

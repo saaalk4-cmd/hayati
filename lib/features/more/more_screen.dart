@@ -35,7 +35,16 @@ class MoreScreen extends ConsumerWidget {
         : ((localName?.isNotEmpty ?? false) ? localName! : 'أهلًا بيك');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('المزيد')),
+      appBar: AppBar(
+        title: const Text('المزيد'),
+        actions: [
+          IconButton(
+            tooltip: 'بحث',
+            onPressed: () => context.push('/search'),
+            icon: const Icon(Icons.search),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
         children: staggered([

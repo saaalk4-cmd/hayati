@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hayati/features/money/money_analytics.dart';
+import 'package:hayati/features/search/global_search.dart';
 import 'package:hayati/features/goals/goals_screen.dart';
 import 'package:hayati/features/calendar/calendar_screen.dart';
 import 'package:hayati/core/theme/app_theme.dart';
@@ -83,7 +84,7 @@ Map<String, Object> _seed() {
 }
 
 Future<void> _shot(WidgetTester tester, Widget screen, String name,
-    {bool dark = false}) async {
+    {bool dark = false, Future<void> Function(WidgetTester)? act}) async {
   SharedPreferences.setMockInitialValues(_seed());
   final prefs = await SharedPreferences.getInstance();
   tester.view.physicalSize = const Size(1080, 2340);
@@ -105,6 +106,12 @@ Future<void> _shot(WidgetTester tester, Widget screen, String name,
   ));
   for (var i = 0; i < 5; i++) {
     await tester.pump(const Duration(milliseconds: 200));
+  }
+  if (act != null) {
+    await act(tester);
+    for (var i = 0; i < 5; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
   }
   await expectLater(find.byType(MaterialApp), matchesGoldenFile('out/$name.png'));
 }
@@ -138,5 +145,7 @@ void main() {
   testWidgets('adhkar', (t) => _shot(t, const AdhkarScreen(groupId: 'morning'), 'adhkar'));
   testWidgets('calendar', (t) => _shot(t, const CalendarScreen(), 'calendar', dark: true));
   testWidgets('goals', (t) => _shot(t, const GoalsScreen(), 'goals', dark: true));
+  testWidgets('search', (t) => _shot(t, const GlobalSearchScreen(), 'search', dark: true,
+      act: (t) => t.enterText(find.byType(TextField), 'ا')));
   testWidgets('money analytics', (t) => _shot(t, const MoneyAnalyticsScreen(), 'money_analytics', dark: true));
 }
