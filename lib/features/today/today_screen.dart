@@ -14,6 +14,8 @@ import '../account/guest_migration.dart';
 import '../family/family_models.dart';
 import '../habits/habits_repository.dart';
 import '../onboarding/onboarding_screen.dart';
+import '../ramadan/ramadan.dart';
+import '../ramadan/ramadan_screen.dart';
 import '../money/add_transaction_sheet.dart';
 import '../money/money_models.dart';
 import '../money/money_repository.dart';
@@ -92,6 +94,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             ),
             const SizedBox(height: 12),
             const _PrayersRow(),
+            const _RamadanSlot(),
             const SizedBox(height: 12),
             SectionCard(
               icon: Icons.check_circle,
@@ -587,6 +590,29 @@ class _GuestMigrationBannerState extends ConsumerState<_GuestMigrationBanner> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// بطاقة رمضان في الشاشة الرئيسية: في رمضان، أو لما يفضل عليه 10 أيام أو أقل
+class _RamadanSlot extends ConsumerWidget {
+  const _RamadanSlot();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final info = ramadanInfo(
+      DateTime.now(),
+      adjustDays: ref.watch(ramadanAdjustProvider),
+    );
+    if (!info.isRamadan && info.daysUntilRamadan > 10) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: GestureDetector(
+        onTap: () => context.push('/worship/ramadan'),
+        child: const RamadanHero(),
       ),
     );
   }

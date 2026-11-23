@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_utils.dart';
 import '../../core/widgets/section_card.dart';
+import '../ramadan/ramadan_screen.dart';
 import 'prayer_log.dart';
 import 'prayer_service.dart';
 import 'prayer_settings.dart';
@@ -93,6 +94,11 @@ class WorshipScreen extends ConsumerWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () => context.push('/worship/ramadan'),
+            child: const RamadanHero(),
           ),
           const SizedBox(height: 12),
           SectionCard(

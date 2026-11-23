@@ -49,6 +49,11 @@ service cloud.firestore {
         allow read, write: if isOwner(uid);
       }
 
+      // رمضان: users/{uid}/ramadan/{hijriYear}
+      match /ramadan/{year} {
+        allow read, write: if isOwner(uid);
+      }
+
       // سجل الصلوات: users/{uid}/prayers/{yyyy-MM-dd}
       match /prayers/{day} {
         allow read, write: if isOwner(uid);

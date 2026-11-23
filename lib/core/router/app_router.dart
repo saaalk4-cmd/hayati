@@ -13,6 +13,7 @@ import '../../features/journal/journal_screen.dart';
 import '../../features/money/money_screen.dart';
 import '../../features/more/more_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
+import '../../features/ramadan/ramadan_screen.dart';
 import '../../features/shell/main_shell.dart';
 import '../../features/stats/stats_screen.dart';
 import '../../features/tasks/tasks_screen.dart';
@@ -83,6 +84,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'quran',
                     builder: (_, _) => const QuranScreen(),
+                  ),
+                  GoRoute(
+                    path: 'ramadan',
+                    builder: (_, _) => const RamadanScreen(),
                   ),
                   GoRoute(
                     path: 'adhkar/:group',

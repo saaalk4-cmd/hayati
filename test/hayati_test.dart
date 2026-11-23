@@ -13,6 +13,7 @@ import 'package:hayati/data/session.dart';
 import 'package:hayati/data/user_store.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hayati/features/stats/stats.dart';
+import 'package:hayati/features/ramadan/ramadan.dart';
 import 'package:hayati/features/widget/home_widget_sync.dart';
 import 'package:hayati/features/reminders/smart_reminders.dart';
 import 'package:hayati/features/worship/prayer_log.dart';
@@ -507,5 +508,28 @@ void main() {
     expect(p.names.split(',').first, 'الفجر');
     expect(p.tasksLine, contains('3'));
     expect(p.habitsLine, 'عادات النهارده: 1/4');
+  });
+
+  group('Ramadan', () {
+    test('before Ramadan: countdown is positive', () {
+      final info = ramadanInfo(DateTime(2026, 11, 23));
+      expect(info.isRamadan, isFalse);
+      expect(info.daysUntilRamadan, greaterThan(0));
+      expect(info.daysUntilRamadan, lessThan(120));
+    });
+
+    test('inside Ramadan: day and Eid countdown', () {
+      final before = ramadanInfo(DateTime(2026, 11, 23));
+      final first = DateTime(
+        2026,
+        11,
+        23,
+      ).add(Duration(days: before.daysUntilRamadan));
+      final info = ramadanInfo(first.add(const Duration(days: 4)));
+      expect(info.isRamadan, isTrue);
+      expect(info.day, 5);
+      expect(info.daysUntilEid, greaterThan(20));
+      expect(info.isLastTen, isFalse);
+    });
   });
 }

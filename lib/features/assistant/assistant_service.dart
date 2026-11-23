@@ -2,6 +2,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/utils/date_utils.dart';
 import '../worship/prayer_service.dart';
 import '../worship/prayer_settings.dart';
 
@@ -108,6 +109,7 @@ class ChatController extends Notifier<ChatState> {
         'sunrise': hm(times.sunrise),
       },
       'nextPrayer': {'name': next.name.name, 'time': hm(next.time)},
+      'hijri': HayatiDates.hijri(DateTime.now()),
     };
   }
 

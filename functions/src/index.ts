@@ -46,6 +46,7 @@ const RequestSchema = z.object({
       nextPrayer: z
         .object({ name: z.string().max(10), time: z.string().max(8) })
         .optional(),
+      hijri: z.string().max(40).optional(),
     })
     .optional(),
   timezoneOffsetMinutes: z.number().int().min(-900).max(900).optional(),
@@ -729,7 +730,28 @@ function buildTools(uid: string, actions: string[]) {
     },
   });
 
+  const logRamadan = betaZodTool({
+    name: "log_ramadan_day",
+    description:
+      "During Ramadan: record whether the user fasted and/or prayed taraweeh on a given Ramadan day (1-30). Use the Hijri date given in the context.",
+    inputSchema: z.object({
+      hijri_year: z.number().int().min(1440).max(1500),
+      day: z.number().int().min(1).max(30),
+      fasted: z.boolean().nullable().describe("null = leave unchanged"),
+      taraweeh: z.boolean().nullable().describe("null = leave unchanged"),
+    }),
+    run: async ({ hijri_year, day, fasted, taraweeh }) => {
+      const update: Record<string, unknown> = {};
+      if (fasted !== null) update.fasted = { [String(day)]: fasted };
+      if (taraweeh !== null) update.taraweeh = { [String(day)]: taraweeh };
+      await userDoc.collection("ramadan").doc(String(hijri_year)).set(update, { merge: true });
+      actions.push(`سجّلت يوم ${day} رمضان${fasted ? " • صيام ✓" : ""}${taraweeh ? " • تراويح ✓" : ""}`);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
   return [
+    logRamadan,
     dayOverview,
     weekSummary,
     listFamily,
@@ -770,7 +792,8 @@ function describeContext(ctx: z.infer<typeof RequestSchema>["context"]): string 
   const next = ctx.nextPrayer
     ? `\nالصلاة الجاية: ${names[ctx.nextPrayer.name] ?? ctx.nextPrayer.name} الساعة ${ctx.nextPrayer.time}.`
     : "";
-  return `\nمواقيت الصلاة النهارده${ctx.place ? ` (${ctx.place})` : ""}: ${times}.${next}`;
+  const hijri = ctx.hijri ? `\nالتاريخ الهجري: ${ctx.hijri}.` : "";
+  return `${hijri}\nمواقيت الصلاة النهارده${ctx.place ? ` (${ctx.place})` : ""}: ${times}.${next}`;
 }
 
 /** Atomically counts today's requests; throws when the daily limit is hit. */
