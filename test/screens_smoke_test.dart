@@ -5,6 +5,7 @@ import 'package:hayati/core/theme/app_theme.dart';
 import 'package:hayati/data/session.dart';
 import 'package:hayati/features/family/family_screen.dart';
 import 'package:hayati/features/habits/habits_screen.dart';
+import 'package:hayati/features/focus/focus_screen.dart';
 import 'package:hayati/features/journal/journal_screen.dart';
 import 'package:hayati/features/money/money_screen.dart';
 import 'package:hayati/features/more/more_screen.dart';
@@ -40,6 +41,7 @@ void main() {
     'quran': const QuranScreen(),
     'tasbeeh': const TasbeehScreen(),
     'qada': const QadaScreen(),
+    'focus': const FocusScreen(),
   };
 
   for (final e in screens.entries) {

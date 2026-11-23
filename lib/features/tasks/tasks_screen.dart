@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/utils/date_utils.dart';
@@ -37,6 +38,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               )
             : const Text('مهامي'),
         actions: [
+          IconButton(
+            tooltip: 'وضع التركيز',
+            onPressed: () => context.push('/focus'),
+            icon: const Icon(Icons.timer_outlined),
+          ),
           IconButton(
             tooltip: _searching ? 'إلغاء البحث' : 'بحث',
             onPressed: () => setState(() {

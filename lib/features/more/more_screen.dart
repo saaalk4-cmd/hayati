@@ -47,6 +47,11 @@ class MoreScreen extends ConsumerWidget {
             onTap: () => context.push('/more/habits'),
           ),
           ListTile(
+            leading: const Icon(Icons.timer_outlined),
+            title: const Text('وضع التركيز'),
+            onTap: () => context.push('/focus'),
+          ),
+          ListTile(
             leading: const Icon(Icons.book_outlined),
             title: const Text('يومياتي'),
             onTap: () => context.push('/more/journal'),

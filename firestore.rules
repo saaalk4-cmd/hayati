@@ -69,6 +69,11 @@ service cloud.firestore {
         allow read, write: if isOwner(uid);
       }
 
+      // وضع التركيز: users/{uid}/focus/{yyyy-MM-dd}
+      match /focus/{day} {
+        allow read, write: if isOwner(uid);
+      }
+
       // سجل الصلوات: users/{uid}/prayers/{yyyy-MM-dd}
       match /prayers/{day} {
         allow read, write: if isOwner(uid);
