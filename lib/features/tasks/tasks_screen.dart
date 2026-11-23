@@ -17,14 +17,34 @@ class TasksScreen extends ConsumerStatefulWidget {
 class _TasksScreenState extends ConsumerState<TasksScreen> {
   String? _list;
   bool _showDone = false;
+  bool _searching = false;
+  String _query = '';
 
   @override
   Widget build(BuildContext context) {
     final tasks = ref.watch(tasksProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('مهامي'),
+        title: _searching
+            ? TextField(
+                autofocus: true,
+                decoration: const InputDecoration(
+                  hintText: 'دوّر في مهامك...',
+                  filled: false,
+                  border: InputBorder.none,
+                ),
+                onChanged: (v) => setState(() => _query = v.trim()),
+              )
+            : const Text('مهامي'),
         actions: [
+          IconButton(
+            tooltip: _searching ? 'إلغاء البحث' : 'بحث',
+            onPressed: () => setState(() {
+              _searching = !_searching;
+              _query = '';
+            }),
+            icon: Icon(_searching ? Icons.close : Icons.search),
+          ),
           IconButton(
             tooltip: _showDone ? 'إخفاء اللي خلص' : 'إظهار اللي خلص',
             onPressed: () => setState(() => _showDone = !_showDone),
@@ -73,6 +93,13 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               data: (all) {
                 final list = all
                     .where((t) => _list == null || t.list == _list)
+                    .where(
+                      (t) =>
+                          _query.isEmpty ||
+                          t.title.contains(_query) ||
+                          (t.notes?.contains(_query) ?? false) ||
+                          t.subtasks.any((s) => s.title.contains(_query)),
+                    )
                     .toList();
                 final groups = _group(list);
                 if (groups.every((g) => g.$2.isEmpty)) return const _Empty();

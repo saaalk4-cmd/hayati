@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/notifications.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_utils.dart';
 import '../../data/task.dart';
 import '../../data/tasks_repository.dart';
@@ -28,6 +29,7 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
   DateTime? _due = DateTime.now();
   TaskRepeat _repeat = TaskRepeat.none;
   TimeOfDay? _remind;
+  TaskPriority _priority = TaskPriority.normal;
 
   @override
   void dispose() {
@@ -61,6 +63,7 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
             repeat: _repeat,
             remindAt: remindAt,
             createdAt: DateTime.now(),
+            priority: _priority,
           ),
         );
     if (mounted) Navigator.pop(context);
@@ -206,6 +209,15 @@ class _AddTaskSheetState extends ConsumerState<_AddTaskSheet> {
                   });
                 }
               },
+            ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              secondary: const Icon(Icons.flag, color: AppColors.danger),
+              title: const Text('مهمة مهمة (أولوية عالية)'),
+              value: _priority == TaskPriority.high,
+              onChanged: (v) => setState(
+                () => _priority = v ? TaskPriority.high : TaskPriority.normal,
+              ),
             ),
             const SizedBox(height: 8),
             FilledButton(onPressed: _save, child: const Text('إضافة')),

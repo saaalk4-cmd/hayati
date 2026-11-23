@@ -14,12 +14,18 @@ abstract class TasksRepository {
   Future<void> add(String title, {String? dueDate});
   Future<void> addTask(HayatiTask task);
   Future<void> toggle(HayatiTask task);
+
+  /// حفظ تعديلات المهمة (العنوان، الأولوية، المهام الفرعية، الملاحظات)
+  Future<void> update(HayatiTask task);
   Future<void> delete(String id);
 }
 
 List<HayatiTask> _sorted(List<HayatiTask> list) => list
   ..sort((a, b) {
     if (a.done != b.done) return a.done ? 1 : -1;
+    if (a.priority != b.priority) {
+      return b.priority.index.compareTo(a.priority.index);
+    }
     final ad = a.dueDate, bd = b.dueDate;
     if (ad != null && bd != null && ad != bd) return ad.compareTo(bd);
     if ((ad == null) != (bd == null)) return ad == null ? 1 : -1;
@@ -63,6 +69,10 @@ class FirestoreTasksRepository implements TasksRepository {
     final next = task.done ? null : task.nextOccurrence('');
     if (next != null) await _col.add(next.toMap());
   }
+
+  @override
+  Future<void> update(HayatiTask task) =>
+      _col.doc(task.id).set(task.toMap(), SetOptions(merge: true));
 
   @override
   Future<void> delete(String id) => _col.doc(id).delete();
@@ -126,6 +136,10 @@ class LocalTasksRepository implements TasksRepository {
       ?next,
     ]);
   }
+
+  @override
+  Future<void> update(HayatiTask task) =>
+      _write([for (final t in _read()) t.id == task.id ? task : t]);
 
   @override
   Future<void> delete(String id) =>

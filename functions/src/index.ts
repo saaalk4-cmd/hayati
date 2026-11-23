@@ -86,6 +86,8 @@ interface TaskDoc {
   notes: string | null;
   list?: string;
   repeat?: string;
+  priority?: string;
+  subtasks?: { title: string; done: boolean }[];
   source: string;
   createdAt: number;
 }
@@ -147,6 +149,8 @@ function buildTools(uid: string, actions: string[]) {
           notes: t.notes ?? null,
           list: t.list ?? "عام",
           repeat: t.repeat ?? "none",
+          priority: t.priority ?? "normal",
+          subtasks: t.subtasks ?? [],
         }));
       return JSON.stringify({ count: list.length, tasks: list });
     },
@@ -170,8 +174,10 @@ function buildTools(uid: string, actions: string[]) {
       repeat: z
         .enum(["none", "daily", "weekly", "monthly"])
         .describe("Repeat rule; needs a due_date when not none"),
+      priority: z.enum(["low", "normal", "high"]).describe("Use high only for clearly important/urgent tasks"),
+      subtasks: z.array(z.string().min(1).max(120)).max(15).describe("Optional checklist steps; empty array if none"),
     }),
-    run: async ({ title, due_date, notes, list, repeat }) => {
+    run: async ({ title, due_date, notes, list, repeat, priority, subtasks }) => {
       const doc: TaskDoc = {
         title,
         done: false,
@@ -179,6 +185,8 @@ function buildTools(uid: string, actions: string[]) {
         notes,
         list,
         repeat: due_date ? repeat : "none",
+        priority,
+        subtasks: subtasks.map((t) => ({ title: t, done: false })),
         source: "assistant",
         createdAt: Date.now(),
       };

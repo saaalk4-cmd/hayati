@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/utils/date_utils.dart';
 import '../../data/task.dart';
 import '../../data/tasks_repository.dart';
+import 'task_detail_sheet.dart';
 
 class TaskTile extends ConsumerWidget {
   const TaskTile({super.key, required this.task, this.dense = false});
@@ -31,6 +32,7 @@ class TaskTile extends ConsumerWidget {
         ),
       ),
       subtitle: dense ? null : _subtitle(context),
+      onTap: () => showTaskDetail(context, task),
       trailing: task.source == 'assistant'
           ? Tooltip(
               message: 'أضافها المساعد',
@@ -64,6 +66,9 @@ class TaskTile extends ConsumerWidget {
       if (task.remindAt != null)
         '⏰ ${task.remindAt!.hour.toString().padLeft(2, '0')}:${task.remindAt!.minute.toString().padLeft(2, '0')}',
       if (task.repeat != TaskRepeat.none) '🔁 ${task.repeat.ar}',
+      if (task.subtasks.isNotEmpty)
+        '☑ ${task.subtasksDone}/${task.subtasks.length}',
+      if (task.priority == TaskPriority.high) '🚩 مهمة',
     ];
     if (parts.isEmpty) return null;
     return Text(

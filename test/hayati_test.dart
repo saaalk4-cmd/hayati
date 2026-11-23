@@ -554,4 +554,46 @@ void main() {
     expect(b[PrayerName.fajr].difference(a[PrayerName.fajr]).inMinutes, -2);
     expect(b[PrayerName.dhuhr], a[PrayerName.dhuhr]);
   });
+
+  test('task priority and subtasks round trip and sort', () async {
+    final t = HayatiTask(
+      id: '1',
+      title: 'مشروع',
+      createdAt: DateTime(2026),
+      priority: TaskPriority.high,
+      subtasks: const [Subtask('خطوة 1', done: true), Subtask('خطوة 2')],
+    );
+    final r = HayatiTask.fromMap('1', t.toMap());
+    expect(r.priority, TaskPriority.high);
+    expect(r.subtasks.length, 2);
+    expect(r.subtasksDone, 1);
+    // التكرار بيرجّع المهام الفرعية من غير علامات
+    final rep = HayatiTask(
+      id: '2',
+      title: 'x',
+      dueDate: '2026-11-23',
+      repeat: TaskRepeat.daily,
+      createdAt: DateTime(2026),
+      subtasks: const [Subtask('a', done: true)],
+    );
+    expect(rep.nextOccurrence('3')!.subtasks.first.done, isFalse);
+
+    SharedPreferences.setMockInitialValues({});
+    final repo = LocalTasksRepository(await SharedPreferences.getInstance());
+    await repo.addTask(
+      HayatiTask(id: '', title: 'عادية', createdAt: DateTime(2026, 1, 2)),
+    );
+    await repo.addTask(
+      HayatiTask(
+        id: '',
+        title: 'مهمة جدًا',
+        createdAt: DateTime(2026, 1, 1),
+        priority: TaskPriority.high,
+      ),
+    );
+    final list = await repo.watch().first;
+    expect(list.first.title, 'مهمة جدًا');
+    await repo.update(list.first.copyWith(subtasks: const [Subtask('s')]));
+    expect((await repo.watch().first).first.subtasks.length, 1);
+  });
 }

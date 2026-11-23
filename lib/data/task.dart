@@ -13,6 +13,31 @@ extension TaskRepeatAr on TaskRepeat {
   }[this]!;
 }
 
+/// أولوية المهمة
+enum TaskPriority { low, normal, high }
+
+extension TaskPriorityAr on TaskPriority {
+  String get ar => const {
+    TaskPriority.low: 'منخفضة',
+    TaskPriority.normal: 'عادية',
+    TaskPriority.high: 'مهمة',
+  }[this]!;
+}
+
+/// مهمة فرعية جوه مهمة
+class Subtask {
+  const Subtask(this.title, {this.done = false});
+  final String title;
+  final bool done;
+
+  Subtask toggled() => Subtask(title, done: !done);
+  Map<String, dynamic> toMap() => {'title': title, 'done': done};
+  factory Subtask.fromMap(Map<String, dynamic> m) => Subtask(
+    (m['title'] as String?) ?? '',
+    done: (m['done'] as bool?) ?? false,
+  );
+}
+
 class HayatiTask {
   const HayatiTask({
     required this.id,
@@ -25,6 +50,8 @@ class HayatiTask {
     this.remindAt,
     this.source = 'app',
     required this.createdAt,
+    this.priority = TaskPriority.normal,
+    this.subtasks = const [],
   });
 
   final String id;
@@ -43,21 +70,33 @@ class HayatiTask {
   /// app | assistant
   final String source;
   final DateTime createdAt;
+  final TaskPriority priority;
+  final List<Subtask> subtasks;
+
+  int get subtasksDone => subtasks.where((s) => s.done).length;
 
   DateTime? get dueDateTime =>
       dueDate == null ? null : DateTime.tryParse(dueDate!);
 
-  HayatiTask copyWith({bool? done, String? title}) => HayatiTask(
+  HayatiTask copyWith({
+    bool? done,
+    String? title,
+    String? notes,
+    TaskPriority? priority,
+    List<Subtask>? subtasks,
+  }) => HayatiTask(
     id: id,
     title: title ?? this.title,
     done: done ?? this.done,
     dueDate: dueDate,
-    notes: notes,
+    notes: notes ?? this.notes,
     list: list,
     repeat: repeat,
     remindAt: remindAt,
     source: source,
     createdAt: createdAt,
+    priority: priority ?? this.priority,
+    subtasks: subtasks ?? this.subtasks,
   );
 
   /// النسخة الجاية من مهمة متكررة
@@ -88,6 +127,8 @@ class HayatiTask {
       remindAt: remindAt == null ? null : shift(remindAt!),
       source: source,
       createdAt: DateTime.now(),
+      priority: priority,
+      subtasks: [for (final s in subtasks) Subtask(s.title)],
     );
   }
 
@@ -101,6 +142,8 @@ class HayatiTask {
     'remindAt': remindAt?.millisecondsSinceEpoch,
     'source': source,
     'createdAt': createdAt.millisecondsSinceEpoch,
+    'priority': priority.name,
+    'subtasks': [for (final s in subtasks) s.toMap()],
   };
 
   factory HayatiTask.fromMap(String id, Map<String, dynamic> m) {
@@ -124,6 +167,14 @@ class HayatiTask {
       createdAt: created is int
           ? DateTime.fromMillisecondsSinceEpoch(created)
           : DateTime.now(),
+      priority: TaskPriority.values.firstWhere(
+        (p) => p.name == m['priority'],
+        orElse: () => TaskPriority.normal,
+      ),
+      subtasks: [
+        for (final e in (m['subtasks'] as List?) ?? const [])
+          Subtask.fromMap((e as Map).cast<String, dynamic>()),
+      ],
     );
   }
 }
