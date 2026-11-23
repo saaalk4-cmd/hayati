@@ -5,8 +5,8 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../money/money_models.dart';
+import '../habits/habit.dart';
 import 'stats.dart';
-import '../../core/utils/date_utils.dart';
 
 class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
@@ -108,9 +108,12 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                                   ),
                                   if (s.days.length <= 7) ...[
                                     const SizedBox(height: 4),
-                                    Text(
-                                      arFormat('E', s.days[i]),
-                                      style: text.labelSmall,
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      child: Text(
+                                        weekdayNamesAr[s.days[i].weekday]!,
+                                        style: text.labelSmall,
+                                      ),
                                     ),
                                   ],
                                 ],

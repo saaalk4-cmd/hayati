@@ -14,6 +14,11 @@ class BrandMark extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(size * 0.24),
+        // حافة ذهبي عشان الشعار الغامق يبان على الخلفية الغامقة
+        border: Border.all(
+          color: AppColors.gold500.withValues(alpha: 0.55),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: AppColors.emerald900.withValues(alpha: 0.25),

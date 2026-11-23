@@ -116,7 +116,15 @@ class QuranScreen extends ConsumerWidget {
                                     _celebrate(context);
                                   }
                                 },
-                                child: Text('+$n'),
+                                style: FilledButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                ),
+                                child: FittedBox(
+                                  child: Text(
+                                    '+$n',
+                                    textDirection: TextDirection.ltr,
+                                  ),
+                                ),
                               ),
                             ),
                             if (n != 10) const SizedBox(width: 8),

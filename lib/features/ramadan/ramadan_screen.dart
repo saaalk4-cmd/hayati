@@ -196,10 +196,14 @@ class _Stat extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Column(
           children: [
-            Text(
-              '$emoji $value',
-              style: Theme.of(context).textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w800),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                '$emoji $value',
+                maxLines: 1,
+                style: Theme.of(context).textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
             ),
             Text(label, style: Theme.of(context).textTheme.bodySmall),
           ],
