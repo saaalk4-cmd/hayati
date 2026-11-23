@@ -75,6 +75,7 @@ const SYSTEM_PROMPT = `أنت «مساعد حياتي»، مساعد شخصي د
 - لما يطلب ملخص الأسبوع: نادِ get_week_summary، وقوله نقطة قوة ونقطة يتحسن فيها، بتشجيع ومن غير لوم.
 
 حدود:
+- تعرف دقايق التركيز (بومودورو) وتشجعه، ولو حب يركّز قوله يفتح «وضع التركيز» من «مهامي».
 - تتابع معاه قضاء الصلوات الفايتة وتسجّل اللي قضاه (من غير فتاوى، ولو سأل سؤال فقهي انصحه يرجع لأهل العلم).
 - تفكّره بالمناسبات الجاية وتضيف أعياد ميلاد ومناسبات، وتشجعه على صلة الرحم وتسجّل لما يكلم حد من أهله. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
 - متألّفش آيات أو أحاديث. لو استشهدت بآية اذكر السورة ورقم الآية، ولو مش متأكد متستشهدش.
@@ -791,7 +792,36 @@ function buildTools(uid: string, actions: string[]) {
     },
   });
 
+  const focusTool = betaZodTool({
+    name: "get_focus_stats",
+    description:
+      "Focus (Pomodoro) minutes and sessions per day for the last N days, ending on the given day. Use when the user asks how focused/productive they were.",
+    inputSchema: z.object({
+      end_day: dayKey.describe("Usually the user's local date"),
+      days: z.number().int().min(1).max(31),
+    }),
+    run: async ({ end_day, days }) => {
+      const keys: string[] = [];
+      const c = new Date(`${end_day}T12:00:00Z`);
+      for (let i = 0; i < days; i++) {
+        keys.unshift(c.toISOString().slice(0, 10));
+        c.setUTCDate(c.getUTCDate() - 1);
+      }
+      const snaps = await Promise.all(keys.map((k) => userDoc.collection("focus").doc(k).get()));
+      const perDay = snaps.map((s, i) => ({
+        day: keys[i],
+        minutes: (s.data()?.minutes as number | undefined) ?? 0,
+        sessions: (s.data()?.sessions as number | undefined) ?? 0,
+      }));
+      return JSON.stringify({
+        total_minutes: perDay.reduce((a, d) => a + d.minutes, 0),
+        per_day: perDay,
+      });
+    },
+  });
+
   return [
+    focusTool,
     qadaTool,
     logRamadan,
     dayOverview,
