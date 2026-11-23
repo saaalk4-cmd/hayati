@@ -15,6 +15,7 @@ class MoreScreen extends ConsumerWidget {
     (Icons.auto_awesome, 'مساعد حياتي', '/assistant'),
     (Icons.local_fire_department_outlined, 'عاداتي', '/more/habits'),
     (Icons.timer_outlined, 'وضع التركيز', '/focus'),
+    (Icons.calendar_month_outlined, 'تقويمي', '/calendar'),
     (Icons.book_outlined, 'يومياتي', '/more/journal'),
     (Icons.cake_outlined, 'مناسباتي وأهلي', '/more/occasions'),
     (Icons.insights_outlined, 'إحصائياتي', '/more/stats'),

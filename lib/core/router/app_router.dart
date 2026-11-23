@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../data/session.dart';
 import '../../features/assistant/assistant_screen.dart';
+import '../../features/calendar/calendar_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/family/family_screen.dart';
 import '../../features/focus/focus_screen.dart';
@@ -60,6 +61,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
       GoRoute(path: '/focus', builder: (_, _) => const FocusScreen()),
+      GoRoute(path: '/calendar', builder: (_, _) => const CalendarScreen()),
       GoRoute(
         path: '/assistant',
         builder: (_, state) =>
