@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
+import '../../core/config/app_config.dart';
 import '../../core/theme/app_colors.dart';
+import 'quick_assistant.dart' show quickExamples;
 import '../../data/session.dart';
 import 'assistant_service.dart';
 import '../../core/theme/palettes.dart';
@@ -85,7 +87,10 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
     final q = widget.initialPrompt;
     if (q != null && q.trim().isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (ref.read(sessionProvider) is UserSession) _send(q);
+        if (!AppConfig.remoteAssistant ||
+            ref.read(sessionProvider) is UserSession) {
+          _send(q);
+        }
       });
     }
   }
@@ -109,7 +114,7 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
   Widget build(BuildContext context) {
     final session = ref.watch(sessionProvider);
     final chat = ref.watch(chatProvider);
-    final enabled = session is UserSession;
+    final enabled = !AppConfig.remoteAssistant || session is UserSession;
 
     ref.listen(chatProvider, (_, _) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -143,7 +148,9 @@ class _AssistantScreenState extends ConsumerState<AssistantScreen> {
                 : chat.messages.isEmpty
                 ? _Welcome(
                     onPick: _send,
-                    suggestions: smartSuggestions(DateTime.now()),
+                    suggestions: AppConfig.remoteAssistant
+                        ? smartSuggestions(DateTime.now())
+                        : quickExamples,
                   )
                 : ListView.builder(
                     controller: _scroll,
@@ -227,7 +234,9 @@ class _Welcome extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         const Text(
-          'أقدر أرتب يومك، أضيف مهام، وأفكّرك باللي ناسيه.',
+          AppConfig.remoteAssistant
+              ? 'أقدر أرتب يومك، أضيف مهام، وأفكّرك باللي ناسيه.'
+              : 'قولّي بالمصري وأنا أسجّل على طول، من غير نت 👇\nمثلًا «صرفت 150 أكل» أو «فكّرني أكلم ماما بكرة 5»',
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -316,23 +325,19 @@ class _Bubble extends StatelessWidget {
                 color: context.palette.primary.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppColors.emerald500.withValues(alpha: 0.4),
+                  color: context.palette.accent.withValues(alpha: 0.45),
                 ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.check,
-                    size: 16,
-                    color: AppColors.emerald700,
-                  ),
+                  Icon(Icons.check, size: 16, color: context.palette.accent),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
                       a,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.emerald900,
+                        color: context.palette.text,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

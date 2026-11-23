@@ -136,6 +136,15 @@ void main() {
   testWidgets('tasks', (t) => _shot(t, const TasksScreen(), 'tasks'));
   testWidgets('more', (t) => _shot(t, const MoreScreen(), 'more'));
   testWidgets('settings', (t) => _shot(t, const SettingsScreen(), 'settings'));
+  testWidgets('assistant chat', (t) => _shot(t, const AssistantScreen(), 'assistant_chat', dark: true,
+      act: (t) async {
+        for (final m in ['صرفت 150 أكل', 'فكّرني أكلم ماما بكرة 5', 'صليت الضهر', 'رتّبلي يومي']) {
+          await t.enterText(find.byType(TextField), m);
+          await t.tap(find.byIcon(Icons.send_rounded));
+          await t.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+          await t.pump(const Duration(milliseconds: 300));
+        }
+      }));
   testWidgets('assistant', (t) => _shot(t, const AssistantScreen(), 'assistant'));
   testWidgets('stats', (t) => _shot(t, const StatsScreen(), 'stats'));
   testWidgets('journal', (t) => _shot(t, const JournalScreen(), 'journal'));

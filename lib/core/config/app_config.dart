@@ -30,6 +30,10 @@ class AppConfig {
       firebaseProjectId.isNotEmpty &&
       firebaseSenderId.isNotEmpty;
 
+  /// مساعد Claude المدفوع (API على Cloud Functions). مستخبي افتراضيًا:
+  /// المساعد بيشتغل بالأوامر السريعة المجانية لحد ما يتفعّل بـ --dart-define=REMOTE_ASSISTANT=true
+  static const remoteAssistant = bool.fromEnvironment('REMOTE_ASSISTANT');
+
   static bool get hasGoogleSignIn => googleServerClientId.isNotEmpty;
 
   static FirebaseOptions get firebaseOptions => const FirebaseOptions(

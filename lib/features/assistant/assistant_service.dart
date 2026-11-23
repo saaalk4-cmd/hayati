@@ -1,6 +1,8 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'quick_assistant.dart';
+
 import '../../core/config/app_config.dart';
 import '../../core/utils/date_utils.dart';
 import '../../data/user_store.dart';
@@ -132,6 +134,14 @@ class ChatController extends Notifier<ChatState> {
     ];
     state = ChatState(messages: history, sending: true);
     ChatMessage reply;
+    if (!AppConfig.remoteAssistant) {
+      // الأوامر السريعة المجانية: من غير نت ومن غير حساب
+      reply = await ref.read(quickAssistantProvider).handle(trimmed);
+      if (!ref.mounted) return;
+      state = ChatState(messages: [...history, reply]);
+      if (!reply.isError) _save(state.messages);
+      return;
+    }
     try {
       // نبعت آخر 20 رسالة بس عشان الطلب يفضل خفيف (من غير رسايل الأخطاء)
       final clean = history.where((m) => !m.isError).toList();
