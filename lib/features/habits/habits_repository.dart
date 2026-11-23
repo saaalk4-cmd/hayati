@@ -1,12 +1,10 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../core/utils/date_utils.dart';
+import '../../data/local_collection.dart';
 import '../../data/session.dart';
 import 'habit.dart';
 
@@ -56,79 +54,63 @@ class FirestoreHabitsRepository implements HabitsRepository {
 }
 
 class LocalHabitsRepository implements HabitsRepository {
-  LocalHabitsRepository(this.prefs);
-  final SharedPreferences prefs;
-  static const _key = 'local_habits';
-  static final _changes = StreamController<void>.broadcast();
+  LocalHabitsRepository(SharedPreferences prefs)
+    : _c = LocalJsonCollection<Habit>(
+        prefs: prefs,
+        key: 'local_habits',
+        fromMap: Habit.fromMap,
+        toMap: (h) => h.toMap(),
+      );
+  final LocalJsonCollection<Habit> _c;
 
-  Map<String, Habit> _read() {
-    final raw = prefs.getString(_key);
-    if (raw == null) return {};
-    final m = jsonDecode(raw) as Map<String, dynamic>;
-    return {
-      for (final e in m.entries)
-        e.key: Habit.fromMap(e.key, e.value as Map<String, dynamic>),
-    };
-  }
-
-  Future<void> _write(Map<String, Habit> m) async {
-    await prefs.setString(
-      _key,
-      jsonEncode({for (final e in m.entries) e.key: e.value.toMap()}),
-    );
-    _changes.add(null);
-  }
+  Habit _copy(
+    Habit h, {
+    required String id,
+    Set<String>? done,
+    DateTime? createdAt,
+  }) => Habit(
+    id: id,
+    title: h.title,
+    emoji: h.emoji,
+    weekdays: h.weekdays,
+    reminder: h.reminder,
+    done: done ?? h.done,
+    source: h.source,
+    createdAt: createdAt ?? h.createdAt,
+  );
 
   @override
-  Stream<List<Habit>> watch() async* {
-    yield _sorted(_read().values.toList());
-    yield* _changes.stream.map((_) => _sorted(_read().values.toList()));
-  }
+  Stream<List<Habit>> watch() =>
+      _c.watch().map((m) => _sorted(m.values.toList()));
 
   @override
   Future<void> save(Habit h) async {
-    final all = _read();
+    final all = _c.read();
     final id = h.id.isEmpty ? const Uuid().v4() : h.id;
     final old = all[id];
-    all[id] = Habit(
+    all[id] = _copy(
+      h,
       id: id,
-      title: h.title,
-      emoji: h.emoji,
-      weekdays: h.weekdays,
-      reminder: h.reminder,
       done: old?.done ?? const {},
-      source: h.source,
-      createdAt: old?.createdAt ?? h.createdAt,
+      createdAt: old?.createdAt,
     );
-    await _write(all);
+    await _c.write(all);
   }
 
   @override
   Future<void> setDone(Habit h, DateTime day, bool done) async {
-    final all = _read();
+    final all = _c.read();
     final cur = all[h.id];
     if (cur == null) return;
     final key = HayatiDates.dayKey(day);
     final days = {...cur.done};
     done ? days.add(key) : days.remove(key);
-    all[h.id] = Habit(
-      id: cur.id,
-      title: cur.title,
-      emoji: cur.emoji,
-      weekdays: cur.weekdays,
-      reminder: cur.reminder,
-      done: days,
-      source: cur.source,
-      createdAt: cur.createdAt,
-    );
-    await _write(all);
+    all[h.id] = _copy(cur, id: cur.id, done: days);
+    await _c.write(all);
   }
 
   @override
-  Future<void> delete(String id) async {
-    final all = _read()..remove(id);
-    await _write(all);
-  }
+  Future<void> delete(String id) async => _c.write(_c.read()..remove(id));
 }
 
 final habitsRepositoryProvider = Provider<HabitsRepository>((ref) {

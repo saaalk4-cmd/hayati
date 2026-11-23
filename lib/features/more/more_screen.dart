@@ -100,10 +100,13 @@ class MoreScreen extends ConsumerWidget {
               }
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.dark_mode_outlined),
-            title: const Text('المظهر'),
-            trailing: SegmentedButton<ThemeMode>(
+          const ListTile(
+            leading: Icon(Icons.dark_mode_outlined),
+            title: Text('المظهر'),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: SegmentedButton<ThemeMode>(
               showSelectedIcon: false,
               segments: const [
                 ButtonSegment(value: ThemeMode.light, label: Text('نهاري')),

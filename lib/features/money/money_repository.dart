@@ -1,11 +1,9 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart' hide Transaction;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../data/local_collection.dart';
 import '../../data/session.dart';
 import '../../data/user_store.dart';
 import 'money_models.dart';
@@ -51,46 +49,28 @@ class FirestoreTransactionsRepository implements TransactionsRepository {
 }
 
 class LocalTransactionsRepository implements TransactionsRepository {
-  LocalTransactionsRepository(this.prefs);
-  final SharedPreferences prefs;
-  static const _key = 'local_transactions';
-  static final _changes = StreamController<void>.broadcast();
-
-  Map<String, Transaction> _read() {
-    final raw = prefs.getString(_key);
-    if (raw == null) return {};
-    final m = jsonDecode(raw) as Map<String, dynamic>;
-    return {
-      for (final e in m.entries)
-        e.key: Transaction.fromMap(e.key, e.value as Map<String, dynamic>),
-    };
-  }
-
-  Future<void> _write(Map<String, Transaction> m) async {
-    await prefs.setString(
-      _key,
-      jsonEncode({for (final e in m.entries) e.key: e.value.toMap()}),
-    );
-    _changes.add(null);
-  }
-
-  List<Transaction> _month(String month) =>
-      _sorted(_read().values.where((t) => t.month == month).toList());
+  LocalTransactionsRepository(SharedPreferences prefs)
+    : _c = LocalJsonCollection<Transaction>(
+        prefs: prefs,
+        key: 'local_transactions',
+        fromMap: Transaction.fromMap,
+        toMap: (t) => t.toMap(),
+      );
+  final LocalJsonCollection<Transaction> _c;
 
   @override
-  Stream<List<Transaction>> watchMonth(String month) async* {
-    yield _month(month);
-    yield* _changes.stream.map((_) => _month(month));
-  }
+  Stream<List<Transaction>> watchMonth(String month) => _c.watch().map(
+    (m) => _sorted(m.values.where((t) => t.month == month).toList()),
+  );
 
   @override
   Future<void> add(Transaction t) async {
     final id = const Uuid().v4();
-    await _write({..._read(), id: Transaction.fromMap(id, t.toMap())});
+    await _c.write({..._c.read(), id: Transaction.fromMap(id, t.toMap())});
   }
 
   @override
-  Future<void> delete(String id) async => _write(_read()..remove(id));
+  Future<void> delete(String id) async => _c.write(_c.read()..remove(id));
 }
 
 final transactionsRepositoryProvider = Provider<TransactionsRepository>((ref) {

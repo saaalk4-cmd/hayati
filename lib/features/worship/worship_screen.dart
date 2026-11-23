@@ -255,30 +255,51 @@ class PrayerChecklist extends ConsumerWidget {
         child: Column(
           children: [
             for (final p in PrayerName.values)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: p == nextToday
-                      ? Border.all(color: AppColors.gold500, width: 1.5)
-                      : null,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                // Material (مش Container) عشان تأثير اللمس يظهر فوق لون الخلفية
+                child: Material(
                   color: p == nextToday
                       ? AppColors.gold500.withValues(alpha: 0.06)
-                      : null,
-                ),
-                child: ListTile(
-                  title: Text(
-                    p.ar,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+                      : Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: p == nextToday
+                        ? const BorderSide(color: AppColors.gold500, width: 1.5)
+                        : BorderSide.none,
                   ),
-                  subtitle: Text(formatPrayerTime(times[p])),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        log[p]?.ar ?? (p == nextToday ? 'قادمة' : '—'),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
+                  clipBehavior: Clip.antiAlias,
+                  child: ListTile(
+                    title: Text(
+                      p.ar,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    subtitle: Text(formatPrayerTime(times[p])),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          log[p]?.ar ?? (p == nextToday ? 'قادمة' : '—'),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: log[p] == null
+                                ? (p == nextToday
+                                      ? AppColors.gold700
+                                      : scheme.outline)
+                                : log[p] == PrayerStatus.missed
+                                ? scheme.error
+                                : AppColors.emerald500,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          log[p] == null
+                              ? (p == nextToday
+                                    ? Icons.schedule
+                                    : Icons.radio_button_unchecked)
+                              : log[p] == PrayerStatus.missed
+                              ? Icons.cancel_outlined
+                              : Icons.check_circle_outline,
                           color: log[p] == null
                               ? (p == nextToday
                                     ? AppColors.gold700
@@ -287,28 +308,11 @@ class PrayerChecklist extends ConsumerWidget {
                               ? scheme.error
                               : AppColors.emerald500,
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        log[p] == null
-                            ? (p == nextToday
-                                  ? Icons.schedule
-                                  : Icons.radio_button_unchecked)
-                            : log[p] == PrayerStatus.missed
-                            ? Icons.cancel_outlined
-                            : Icons.check_circle_outline,
-                        color: log[p] == null
-                            ? (p == nextToday
-                                  ? AppColors.gold700
-                                  : scheme.outline)
-                            : log[p] == PrayerStatus.missed
-                            ? scheme.error
-                            : AppColors.emerald500,
-                      ),
-                    ],
+                      ],
+                    ),
+                    enabled: !times[p].isAfter(now) || log[p] != null,
+                    onTap: () => _pick(context, ref, p),
                   ),
-                  enabled: !times[p].isAfter(now) || log[p] != null,
-                  onTap: () => _pick(context, ref, p),
                 ),
               ),
           ],

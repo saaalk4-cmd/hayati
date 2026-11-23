@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_utils.dart';
 import '../lock/lock_service.dart';
+import '../habits/habit.dart';
 import 'journal_repository.dart';
 
 /// اليوميات بتتقفل بالبصمة/الرمز لو قفل التطبيق مفعّل
@@ -198,17 +199,23 @@ class _MoodWeek extends StatelessWidget {
                     builder: (context) {
                       final d = today.subtract(Duration(days: i));
                       final e = byDay[HayatiDates.dayKey(d)];
-                      return Column(
-                        children: [
-                          Text(
-                            e?.mood == null ? '·' : moodEmojis[e!.mood]!,
-                            style: const TextStyle(fontSize: 24),
-                          ),
-                          Text(
-                            arFormat('E', d),
-                            style: Theme.of(context).textTheme.labelSmall,
-                          ),
-                        ],
+                      return Expanded(
+                        child: Column(
+                          children: [
+                            Text(
+                              e?.mood == null ? '·' : moodEmojis[e!.mood]!,
+                              style: const TextStyle(fontSize: 24),
+                            ),
+                            // أسماء قصيرة (سبت، أحد...) عشان الصف ميطلعش برا الشاشة
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                weekdayNamesAr[d.weekday]!,
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   ),

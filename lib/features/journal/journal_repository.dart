@@ -1,10 +1,8 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data/local_collection.dart';
 import '../../data/session.dart';
 
 /// مزاج اليوم من 1 (وحش) لـ 5 (ممتاز)
@@ -96,40 +94,24 @@ class FirestoreJournalRepository implements JournalRepository {
 }
 
 class LocalJournalRepository implements JournalRepository {
-  LocalJournalRepository(this.prefs);
-  final SharedPreferences prefs;
-  static const _key = 'local_journal';
-  static final _changes = StreamController<void>.broadcast();
-
-  Map<String, JournalEntry> _read() {
-    final raw = prefs.getString(_key);
-    if (raw == null) return {};
-    final m = jsonDecode(raw) as Map<String, dynamic>;
-    return {
-      for (final e in m.entries)
-        e.key: JournalEntry.fromMap(e.key, e.value as Map<String, dynamic>),
-    };
-  }
-
-  Future<void> _write(Map<String, JournalEntry> m) async {
-    await prefs.setString(
-      _key,
-      jsonEncode({for (final e in m.entries) e.key: e.value.toMap()}),
-    );
-    _changes.add(null);
-  }
+  LocalJournalRepository(SharedPreferences prefs)
+    : _c = LocalJsonCollection<JournalEntry>(
+        prefs: prefs,
+        key: 'local_journal',
+        fromMap: JournalEntry.fromMap,
+        toMap: (e) => e.toMap(),
+      );
+  final LocalJsonCollection<JournalEntry> _c;
 
   @override
-  Stream<List<JournalEntry>> watchAll() async* {
-    yield _sorted(_read().values.toList());
-    yield* _changes.stream.map((_) => _sorted(_read().values.toList()));
-  }
+  Stream<List<JournalEntry>> watchAll() =>
+      _c.watch().map((m) => _sorted(m.values.toList()));
 
   @override
-  Future<void> save(JournalEntry e) => _write({..._read(), e.day: e});
+  Future<void> save(JournalEntry e) => _c.write({..._c.read(), e.day: e});
 
   @override
-  Future<void> delete(String day) => _write(_read()..remove(day));
+  Future<void> delete(String day) async => _c.write(_c.read()..remove(day));
 }
 
 final journalRepositoryProvider = Provider<JournalRepository>((ref) {

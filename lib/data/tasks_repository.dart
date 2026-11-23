@@ -1,11 +1,9 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+import 'local_collection.dart';
 import 'session.dart';
 import 'task.dart';
 
@@ -80,37 +78,23 @@ class FirestoreTasksRepository implements TasksRepository {
 
 /// المهام على الجهاز (وضع الضيف)
 class LocalTasksRepository implements TasksRepository {
-  LocalTasksRepository(this.prefs);
-  final SharedPreferences prefs;
-  static const _key = 'local_tasks';
-  final _controller = StreamController<List<HayatiTask>>.broadcast();
+  LocalTasksRepository(SharedPreferences prefs)
+    : _c = LocalJsonCollection<HayatiTask>(
+        prefs: prefs,
+        key: 'local_tasks',
+        fromMap: HayatiTask.fromMap,
+        toMap: (t) => t.toMap(),
+      );
+  final LocalJsonCollection<HayatiTask> _c;
 
-  List<HayatiTask> _read() {
-    final raw = prefs.getString(_key);
-    if (raw == null) return [];
-    final map = (jsonDecode(raw) as Map<String, dynamic>);
-    return _sorted(
-      map.entries
-          .map(
-            (e) => HayatiTask.fromMap(e.key, e.value as Map<String, dynamic>),
-          )
-          .toList(),
-    );
-  }
+  List<HayatiTask> _read() => _sorted(_c.read().values.toList());
 
-  Future<void> _write(List<HayatiTask> list) async {
-    await prefs.setString(
-      _key,
-      jsonEncode({for (final t in list) t.id: t.toMap()}),
-    );
-    _controller.add(_read());
-  }
+  Future<void> _write(List<HayatiTask> list) =>
+      _c.write({for (final t in list) t.id: t});
 
   @override
-  Stream<List<HayatiTask>> watch() async* {
-    yield _read();
-    yield* _controller.stream;
-  }
+  Stream<List<HayatiTask>> watch() =>
+      _c.watch().map((m) => _sorted(m.values.toList()));
 
   @override
   Future<void> add(String title, {String? dueDate}) => addTask(
