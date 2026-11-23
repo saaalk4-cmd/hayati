@@ -3,7 +3,9 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/brand_mark.dart';
+import '../../core/notifications.dart';
 import '../../data/session.dart';
+import '../worship/prayer_settings.dart';
 
 const onboardedKey = 'onboarded_v1';
 const userNameKey = 'user_name';
@@ -71,7 +73,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final last = _index == _slides.length;
+    final last = _index == _slides.length + 1;
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -162,19 +164,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           controller: _name,
                           textAlign: TextAlign.center,
                           textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => _finish(),
+                          onSubmitted: (_) => _page.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                          ),
                           decoration: const InputDecoration(hintText: 'اسمك'),
                         ),
                       ],
                     ),
                   ),
+                  _PermissionsPage(),
                 ],
               ),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                for (var i = 0; i <= _slides.length; i++)
+                for (var i = 0; i <= _slides.length + 1; i++)
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -209,4 +215,93 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _finish() =>
       ref.read(onboardedProvider.notifier).finish(_name.text);
+}
+
+/// آخر صفحة: نطلب الأذونات بشرح بسيط (ويقدر يتخطاها)
+class _PermissionsPage extends ConsumerStatefulWidget {
+  @override
+  ConsumerState<_PermissionsPage> createState() => _PermissionsPageState();
+}
+
+class _PermissionsPageState extends ConsumerState<_PermissionsPage> {
+  bool _loc = false;
+  bool _notif = false;
+  bool _busy = false;
+
+  Future<void> _askLocation() async {
+    setState(() => _busy = true);
+    final err = await ref
+        .read(prayerSettingsProvider.notifier)
+        .detectLocation();
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _loc = err == null;
+    });
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+    }
+  }
+
+  Future<void> _askNotifications() async {
+    final ok = await AppNotifications.instance.requestPermissions();
+    if (mounted) setState(() => _notif = ok);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    Widget item(
+      IconData icon,
+      String title,
+      String body,
+      bool done,
+      VoidCallback onTap,
+    ) => Card(
+      child: ListTile(
+        leading: Icon(icon, color: AppColors.emerald700, size: 32),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+        subtitle: Text(body),
+        trailing: done
+            ? const Icon(Icons.check_circle, color: AppColors.emerald500)
+            : TextButton(
+                onPressed: _busy ? null : onTap,
+                child: const Text('اسمح'),
+              ),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'خلّينا نجهّز التطبيق',
+            style: text.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'تقدر تغيّر ده في أي وقت من الإعدادات',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          item(
+            Icons.location_on_outlined,
+            'الموقع',
+            'عشان مواقيت الصلاة والقبلة تبقى دقيقة. مش بيترفع على أي سيرفر.',
+            _loc,
+            _askLocation,
+          ),
+          const SizedBox(height: 8),
+          item(
+            Icons.notifications_active_outlined,
+            'الإشعارات',
+            'للأذان، وملخص الصبح، وتذكير المهام والعادات.',
+            _notif,
+            _askNotifications,
+          ),
+        ],
+      ),
+    );
+  }
 }

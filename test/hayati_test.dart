@@ -408,6 +408,9 @@ void main() {
     await tester.tap(find.text('تخطّي'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'أحمد');
+    await tester.tap(find.text('التالي'));
+    await tester.pumpAndSettle();
+    expect(find.text('خلّينا نجهّز التطبيق'), findsOneWidget);
     await tester.tap(find.text('يلا نبدأ'));
     await tester.pumpAndSettle();
     expect(container.read(onboardedProvider), isTrue);
