@@ -38,7 +38,7 @@
 ## الصور (جاهزة ✅)
 - أيقونة 512×512: `assets/brand/app_icon.png` (صغّرها لـ 512)
 - صورة الغلاف 1024×500: `assets/brand/store/feature_graphic_1024x500.png` (من Canva: https://canva.link/0qh0vzimq9r3gzn)
-- 4 لقطات شاشة 1080×1920 من التطبيق الحقيقي بإطار موبايل وعناوين: `assets/brand/store/screenshot_*.png`
+- 6 لقطات شاشة 1080×1920 من التطبيق الحقيقي بالثيم الجديد «زمرّدي ليلي»، بإطار موبايل وعناوين: `assets/brand/store/screenshot_*.png`
 - تصميمات Canva للشاشات (للعرض): `assets/brand/screens/`
 
 > ملاحظة: الكلام الصغير جوه الموبايل في صورة الغلاف فيه أخطاء بسيطة من Canva (زي «السلام حايكم»)، وتقدر تعدّله من لينك Canva فوق قبل النشر.
