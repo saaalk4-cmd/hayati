@@ -8,6 +8,7 @@ import 'package:hayati/features/habits/habits_screen.dart';
 import 'package:hayati/features/focus/focus_screen.dart';
 import 'package:hayati/features/calendar/calendar_screen.dart';
 import 'package:hayati/features/goals/goals_screen.dart';
+import 'package:hayati/features/money/money_analytics.dart';
 import 'package:hayati/features/journal/journal_screen.dart';
 import 'package:hayati/features/money/money_screen.dart';
 import 'package:hayati/features/more/more_screen.dart';
@@ -50,6 +51,7 @@ void main() {
     'focus': const FocusScreen(),
     'calendar': const CalendarScreen(),
     'goals': const GoalsScreen(),
+    'money_analytics': const MoneyAnalyticsScreen(),
   };
 
   for (final e in screens.entries) {

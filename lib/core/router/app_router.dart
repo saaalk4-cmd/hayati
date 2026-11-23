@@ -13,6 +13,7 @@ import '../../features/habits/habit_detail_screen.dart';
 import '../../features/habits/habits_screen.dart';
 import '../../features/journal/journal_editor_screen.dart';
 import '../../features/journal/journal_screen.dart';
+import '../../features/money/money_analytics.dart';
 import '../../features/money/money_screen.dart';
 import '../../features/more/more_screen.dart';
 import '../../features/more/settings_screen.dart';
@@ -124,7 +125,16 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/money', builder: (_, _) => const MoneyScreen()),
+              GoRoute(
+                path: '/money',
+                builder: (_, _) => const MoneyScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'analytics',
+                    builder: (_, _) => const MoneyAnalyticsScreen(),
+                  ),
+                ],
+              ),
             ],
           ),
           StatefulShellBranch(

@@ -1,3 +1,4 @@
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
@@ -38,6 +39,11 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
       appBar: AppBar(
         title: const Text('فلوسي'),
         actions: [
+          IconButton(
+            tooltip: 'تحليلات',
+            onPressed: () => context.go('/money/analytics'),
+            icon: const Icon(Icons.insights_outlined),
+          ),
           IconButton(
             tooltip: 'تصدير الشهر (CSV)',
             onPressed: () => _exportCsv(

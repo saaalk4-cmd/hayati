@@ -28,6 +28,7 @@ import 'package:hayati/features/worship/quran_progress.dart';
 import 'package:hayati/features/worship/qada.dart';
 import 'package:hayati/features/worship/islamic_occasions.dart';
 import 'package:hayati/features/goals/goals.dart';
+import 'package:hayati/features/money/money_analytics.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -790,5 +791,16 @@ void main() {
     expect(back.title, 'جزء عمّ');
     expect(back.steps.map((s) => s.done), [true, true]);
     expect(upsertGoal(list, back.copyWith(title: 'x')).single.title, 'x');
+  });
+
+  test('تحليلات الفلوس: آخر 6 شهور ومتوسط اليوم', () {
+    final m = lastMonths(DateTime(2026, 2, 10));
+    expect(m.length, 6);
+    expect(m.first, DateTime(2025, 9));
+    expect(m.last, DateTime(2026, 2));
+    // الشهر الحالي: على الأيام اللي فاتت بس
+    expect(dailyAverage(500, DateTime(2026, 2), DateTime(2026, 2, 10)), 50);
+    // شهر خلص: على كل أيامه
+    expect(dailyAverage(310, DateTime(2026, 1), DateTime(2026, 2, 10)), 10);
   });
 }
