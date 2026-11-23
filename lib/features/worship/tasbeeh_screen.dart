@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_utils.dart';
 import '../../data/user_store.dart';
+import '../../core/theme/palettes.dart';
 
 const tasbeehPhrases = [
   'سُبْحَانَ اللَّهِ',
@@ -138,7 +139,7 @@ class _TasbeehScreenState extends ConsumerState<TasbeehScreen> {
                               ? 1
                               : progress,
                           strokeWidth: 10,
-                          backgroundColor: AppColors.emerald100,
+                          backgroundColor: context.palette.track,
                           color: AppColors.gold500,
                         ),
                       ),

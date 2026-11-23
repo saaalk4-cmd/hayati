@@ -7,6 +7,7 @@ import '../../core/utils/date_utils.dart';
 import '../lock/lock_service.dart';
 import '../habits/habit.dart';
 import 'journal_repository.dart';
+import '../../core/theme/palettes.dart';
 
 /// اليوميات بتتقفل بالبصمة/الرمز لو قفل التطبيق مفعّل
 class JournalScreen extends ConsumerStatefulWidget {
@@ -94,7 +95,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
               const SizedBox(height: 12),
               for (final (label, e) in memories)
                 Card(
-                  color: AppColors.gold200.withValues(alpha: 0.6),
+                  color: context.palette.accent.withValues(alpha: 0.16),
                   child: ListTile(
                     leading: const Icon(
                       Icons.history,

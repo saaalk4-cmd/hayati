@@ -6,6 +6,7 @@ import '../../core/notifications.dart';
 import '../../core/theme/app_colors.dart';
 import 'family_models.dart';
 import '../../core/utils/date_utils.dart';
+import '../../core/theme/palettes.dart';
 
 class FamilyScreen extends ConsumerWidget {
   const FamilyScreen({super.key});
@@ -79,7 +80,7 @@ class _OccasionsTab extends ConsumerWidget {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: days <= 3 ? AppColors.gold500 : AppColors.emerald100,
+                color: days <= 3 ? AppColors.gold500 : context.palette.track,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -129,10 +130,10 @@ class _PeopleTab extends ConsumerWidget {
         final due = p.isDue(now);
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 6),
-          color: due ? AppColors.gold200.withValues(alpha: 0.5) : null,
+          color: due ? context.palette.accent.withValues(alpha: 0.16) : null,
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: AppColors.emerald100,
+              backgroundColor: context.palette.accent.withValues(alpha: 0.2),
               child: Text(
                 p.name.isEmpty ? '?' : p.name.characters.first,
                 style: const TextStyle(

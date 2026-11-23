@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hayati/core/theme/app_theme.dart';
+import 'package:hayati/core/theme/palettes.dart';
+import 'package:hayati/core/widgets/hayati_background.dart';
 import 'package:hayati/data/session.dart';
 import 'package:hayati/features/habits/habits_screen.dart';
 import 'package:hayati/features/money/money_screen.dart';
@@ -79,11 +81,11 @@ Future<void> _shot(WidgetTester tester, Widget screen, String name,
     ],
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: dark ? AppTheme.dark() : AppTheme.light(),
+      theme: dark ? AppTheme.fromPalette(royalNavy) : AppTheme.fromPalette(emeraldNight),
       locale: const Locale('ar'),
       supportedLocales: const [Locale('ar')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      home: screen,
+      home: HayatiBackground(child: screen),
     ),
   ));
   for (var i = 0; i < 5; i++) {

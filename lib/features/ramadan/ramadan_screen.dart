@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../worship/prayer_service.dart';
 import '../worship/prayer_settings.dart';
 import 'ramadan.dart';
+import '../../core/theme/palettes.dart';
 
 final ramadanAdjustProvider = Provider<int>(
   (ref) => ref.watch(prayerSettingsProvider.select((s) => s.hijriAdjust)),
@@ -88,7 +89,7 @@ class RamadanScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           if (info.isLastTen)
             Card(
-              color: AppColors.gold200.withValues(alpha: 0.6),
+              color: context.palette.accent.withValues(alpha: 0.16),
               child: const ListTile(
                 leading: Text('✨', style: TextStyle(fontSize: 28)),
                 title: Text('العشر الأواخر'),

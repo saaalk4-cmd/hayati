@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/theme/app_colors.dart';
 import 'quran_progress.dart';
+import '../../core/theme/palettes.dart';
 
 class QuranScreen extends ConsumerWidget {
   const QuranScreen({super.key});
@@ -37,7 +38,7 @@ class QuranScreen extends ConsumerWidget {
                               child: CircularProgressIndicator(
                                 value: q.khatmaFraction,
                                 strokeWidth: 12,
-                                backgroundColor: AppColors.emerald100,
+                                backgroundColor: context.palette.track,
                               ),
                             ),
                             Column(

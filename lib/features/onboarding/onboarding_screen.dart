@@ -6,6 +6,7 @@ import '../../core/widgets/brand_mark.dart';
 import '../../core/notifications.dart';
 import '../../data/session.dart';
 import '../worship/prayer_settings.dart';
+import '../../core/theme/palettes.dart';
 
 const onboardedKey = 'onboarded_v1';
 const userNameKey = 'user_name';
@@ -189,7 +190,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     decoration: BoxDecoration(
                       color: i == _index
                           ? AppColors.gold500
-                          : AppColors.emerald100,
+                          : context.palette.track,
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),

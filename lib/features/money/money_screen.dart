@@ -12,6 +12,7 @@ import 'add_transaction_sheet.dart';
 import 'money_models.dart';
 import 'money_repository.dart';
 import '../../core/utils/date_utils.dart';
+import '../../core/theme/palettes.dart';
 
 String monthKey(DateTime d) => DateFormat('yyyy-MM').format(d);
 
@@ -223,11 +224,7 @@ class _SummaryCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.emerald700, AppColors.emerald900],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ),
+        gradient: context.palette.hero,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -259,7 +256,7 @@ class _SummaryCard extends StatelessWidget {
                   ? 'عدّيت الميزانية بـ ${formatMoney(summary.spent - b!)}'
                   : 'باقي ${formatMoney(b! - summary.spent)} من ميزانية ${formatMoney(b)}',
               style: text.bodyMedium?.copyWith(
-                color: over ? const Color(0xFFFFCDD2) : AppColors.gold200,
+                color: over ? const Color(0xFFFFCDD2) : context.palette.accent,
               ),
             ),
           ] else

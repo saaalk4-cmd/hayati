@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/hayati_background.dart';
 import 'data/session.dart';
 import 'data/settings.dart';
 import 'features/lock/lock_screen.dart';
@@ -90,7 +91,7 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
-    final mode = ref.watch(themeModeProvider);
+    final palette = ref.watch(paletteProvider);
     final locked = ref.watch(lockProvider.select((s) => s.locked));
     final session = ref.watch(sessionProvider);
     ref.listen(
@@ -118,22 +119,25 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
     return MaterialApp.router(
       title: 'حياتي',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
-      themeMode: mode,
+      theme: AppTheme.fromPalette(palette),
       locale: const Locale('ar'),
       supportedLocales: const [Locale('ar')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       routerConfig: router,
       builder: (context, child) {
+        final Widget content;
         if (session is SessionLoading) {
-          return const Scaffold(
+          content = const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
+        } else if (locked && session is! SignedOut) {
+          // شاشة القفل فوق كل حاجة لما يكون فيه مستخدم داخل
+          content = const LockScreen();
+        } else {
+          // الشاشات العادية بترسم خلفيتها من خلال الانتقال (HayatiPageTransitionsBuilder)
+          return child ?? const SizedBox.shrink();
         }
-        // شاشة القفل فوق كل حاجة لما يكون فيه مستخدم داخل
-        if (locked && session is! SignedOut) return const LockScreen();
-        return child ?? const SizedBox.shrink();
+        return HayatiBackground(child: content);
       },
     );
   }

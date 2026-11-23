@@ -5,6 +5,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import '../../core/theme/app_colors.dart';
 import '../../data/session.dart';
 import 'assistant_service.dart';
+import '../../core/theme/palettes.dart';
 
 class AssistantScreen extends ConsumerStatefulWidget {
   const AssistantScreen({super.key, this.initialPrompt});
@@ -309,7 +310,7 @@ class _Bubble extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 6),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.emerald100.withValues(alpha: 0.6),
+                color: context.palette.primary.withValues(alpha: 0.16),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: AppColors.emerald500.withValues(alpha: 0.4),

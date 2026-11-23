@@ -25,6 +25,7 @@ import '../tasks/task_tile.dart';
 import '../worship/prayer_log.dart';
 import '../worship/prayer_service.dart';
 import '../worship/worship_screen.dart';
+import '../../core/theme/palettes.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({super.key});
@@ -153,11 +154,7 @@ class _Header extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.emerald700, AppColors.emerald900],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ),
+        gradient: context.palette.hero,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -527,7 +524,7 @@ class _GuestMigrationBannerState extends ConsumerState<_GuestMigrationBanner> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Card(
-        color: AppColors.gold200.withValues(alpha: 0.7),
+        color: context.palette.accent.withValues(alpha: 0.16),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

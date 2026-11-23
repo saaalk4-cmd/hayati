@@ -1,26 +1,22 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:material_ui/material_ui.dart';
 
+import '../core/theme/palettes.dart';
 import 'session.dart';
 
-class ThemeModeController extends Notifier<ThemeMode> {
-  static const _key = 'theme_mode';
+/// الثيم المختار (زمرّدي ليلي هو الأساسي)
+class PaletteController extends Notifier<HayatiPalette> {
+  static const _key = 'palette_id';
 
   @override
-  ThemeMode build() {
-    final v = ref.read(sharedPrefsProvider).getString(_key);
-    return ThemeMode.values.firstWhere(
-      (m) => m.name == v,
-      orElse: () => ThemeMode.system,
-    );
-  }
+  HayatiPalette build() =>
+      paletteById(ref.read(sharedPrefsProvider).getString(_key));
 
-  Future<void> set(ThemeMode mode) async {
-    state = mode;
-    await ref.read(sharedPrefsProvider).setString(_key, mode.name);
+  Future<void> set(HayatiPalette p) async {
+    state = p;
+    await ref.read(sharedPrefsProvider).setString(_key, p.id);
   }
 }
 
-final themeModeProvider = NotifierProvider<ThemeModeController, ThemeMode>(
-  ThemeModeController.new,
+final paletteProvider = NotifierProvider<PaletteController, HayatiPalette>(
+  PaletteController.new,
 );

@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../data/session.dart';
-import '../../data/settings.dart';
 import '../../core/notifications.dart';
+import '../../core/widgets/palette_picker.dart';
 import '../account/account_data.dart';
 import '../reminders/smart_reminders.dart';
 import '../account/privacy_screen.dart';
@@ -18,7 +18,6 @@ class MoreScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
     final lock = ref.watch(lockProvider);
-    final mode = ref.watch(themeModeProvider);
     final reminders = ref.watch(reminderSettingsProvider);
 
     Widget section(String title) => Padding(
@@ -101,22 +100,12 @@ class MoreScreen extends ConsumerWidget {
             },
           ),
           const ListTile(
-            leading: Icon(Icons.dark_mode_outlined),
-            title: Text('المظهر'),
+            leading: Icon(Icons.palette_outlined),
+            title: Text('الثيم'),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: SegmentedButton<ThemeMode>(
-              showSelectedIcon: false,
-              segments: const [
-                ButtonSegment(value: ThemeMode.light, label: Text('نهاري')),
-                ButtonSegment(value: ThemeMode.system, label: Text('تلقائي')),
-                ButtonSegment(value: ThemeMode.dark, label: Text('ليلي')),
-              ],
-              selected: {mode},
-              onSelectionChanged: (s) =>
-                  ref.read(themeModeProvider.notifier).set(s.first),
-            ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: PalettePicker(),
           ),
           section('التنبيهات'),
           SwitchListTile(

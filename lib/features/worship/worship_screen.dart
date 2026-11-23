@@ -11,6 +11,7 @@ import 'prayer_service.dart';
 import 'prayer_settings.dart';
 import 'quran_progress.dart';
 import 'tasbeeh_screen.dart';
+import '../../core/theme/palettes.dart';
 
 class WorshipScreen extends ConsumerWidget {
   const WorshipScreen({super.key});
@@ -39,7 +40,7 @@ class WorshipScreen extends ConsumerWidget {
           if (!settings.hasRealLocation) ...[
             const SizedBox(height: 12),
             Card(
-              color: AppColors.gold200.withValues(alpha: 0.6),
+              color: context.palette.accent.withValues(alpha: 0.16),
               child: ListTile(
                 leading: const Icon(Icons.location_on_outlined),
                 title: const Text('المواقيت محسوبة على القاهرة'),
@@ -197,11 +198,7 @@ class NextPrayerHero extends ConsumerWidget {
     return Container(
       padding: EdgeInsets.all(compact ? 16 : 20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.emerald700, AppColors.emerald900],
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-        ),
+        gradient: context.palette.hero,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Row(
