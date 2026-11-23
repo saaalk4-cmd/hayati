@@ -202,8 +202,11 @@ class _Tile extends StatelessWidget {
 
 /// بطاقة الصلاة الجاية بعدّاد تنازلي (بتظهر في «يومي» و«عباداتي»)
 class NextPrayerHero extends ConsumerWidget {
-  const NextPrayerHero({super.key, this.compact = false});
+  const NextPrayerHero({super.key, this.compact = false, this.footer});
   final bool compact;
+
+  /// محتوى إضافي جوه نفس البطاقة (زي دواير الصلوات في «يومي»)
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -224,32 +227,42 @@ class NextPrayerHero extends ConsumerWidget {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          const _CrescentMark(),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'الصلاة الجاية',
-                  style: text.bodyMedium?.copyWith(color: Colors.white70),
+          Row(
+            children: [
+              const _CrescentMark(),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'الصلاة الجاية',
+                      style: text.bodyMedium?.copyWith(color: Colors.white70),
+                    ),
+                    Text(
+                      '${next.name.ar} • ${formatPrayerTime(next.time)}',
+                      style: text.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    Text(
+                      formatCountdown(next.time.difference(now)),
+                      style: text.bodyLarge?.copyWith(color: AppColors.gold500),
+                    ),
+                  ],
                 ),
-                Text(
-                  '${next.name.ar} • ${formatPrayerTime(next.time)}',
-                  style: text.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  formatCountdown(next.time.difference(now)),
-                  style: text.bodyLarge?.copyWith(color: AppColors.gold500),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+          if (footer != null) ...[
+            const SizedBox(height: 14),
+            Divider(color: Colors.white.withValues(alpha: 0.15), height: 1),
+            const SizedBox(height: 10),
+            footer!,
+          ],
         ],
       ),
     );

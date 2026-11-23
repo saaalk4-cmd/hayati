@@ -71,16 +71,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
 
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton.extended(
-        elevation: 4,
-        shape: const StadiumBorder(),
-        onPressed: () => context.push('/assistant'),
-        icon: const Icon(Icons.auto_awesome),
-        label: const Text(
-          'اسأل حياتي',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-      ),
+      floatingActionButton: const _AskButton(),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
@@ -92,10 +83,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             const SizedBox(height: 12),
             GestureDetector(
               onTap: () => context.go('/worship'),
-              child: const NextPrayerHero(compact: true),
+              // دواير الصلوات جوه نفس البطاقة (زي تصميم Canva الغامق)
+              child: const NextPrayerHero(compact: true, footer: _PrayersRow()),
             ),
-            const SizedBox(height: 12),
-            const _PrayersRow(),
             const _RamadanSlot(),
             const SizedBox(height: 12),
             SectionCard(
@@ -253,10 +243,12 @@ class _PrayersRow extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             for (final p in PrayerName.values)
-              PrayerDot(
-                prayer: p,
-                status: log[p],
-                isNext: nextIsToday && next.name == p,
+              Expanded(
+                child: PrayerDot(
+                  prayer: p,
+                  status: log[p],
+                  isNext: nextIsToday && next.name == p,
+                ),
               ),
           ],
         ),
@@ -301,11 +293,11 @@ class PrayerDot extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 52,
-          height: 52,
+          width: 46,
+          height: 46,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Theme.of(context).cardTheme.color,
+            color: Colors.black.withValues(alpha: 0.18),
             border: Border.all(color: ring, width: isNext ? 3 : 2),
             boxShadow: isNext
                 ? [
@@ -334,10 +326,14 @@ class PrayerDot extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
-          prayer.ar,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontWeight: isNext ? FontWeight.w800 : FontWeight.w600,
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            prayer.ar,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Colors.white.withValues(alpha: isNext ? 1 : 0.8),
+              fontWeight: isNext ? FontWeight.w800 : FontWeight.w600,
+            ),
           ),
         ),
         if (isNext)
@@ -619,6 +615,62 @@ class _RamadanSlot extends ConsumerWidget {
       child: GestureDetector(
         onTap: () => context.push('/worship/ramadan'),
         child: const RamadanHero(),
+      ),
+    );
+  }
+}
+
+/// زرار «اسأل حياتي» بتدرّج ذهبي ولمعة
+class _AskButton extends StatelessWidget {
+  const _AskButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(40),
+        gradient: LinearGradient(
+          colors: [
+            Color.lerp(p.accent, Colors.white, 0.25)!,
+            p.accent,
+            Color.lerp(p.accent, Colors.black, 0.2)!,
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: p.accent.withValues(alpha: 0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(40),
+          onTap: () => context.push('/assistant'),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'اسأل حياتي',
+                  style: TextStyle(
+                    color: p.onAccent,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.auto_awesome, color: p.onAccent),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
