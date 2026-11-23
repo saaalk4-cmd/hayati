@@ -13,6 +13,7 @@ import '../../features/journal/journal_editor_screen.dart';
 import '../../features/journal/journal_screen.dart';
 import '../../features/money/money_screen.dart';
 import '../../features/more/more_screen.dart';
+import '../../features/more/settings_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/ramadan/ramadan_screen.dart';
 import '../../features/shell/main_shell.dart';
@@ -123,6 +124,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/more',
                 builder: (_, _) => const MoreScreen(),
                 routes: [
+                  GoRoute(
+                    path: 'settings',
+                    builder: (_, _) => const SettingsScreen(),
+                  ),
                   GoRoute(
                     path: 'habits',
                     builder: (_, _) => const HabitsScreen(),

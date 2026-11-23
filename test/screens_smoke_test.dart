@@ -9,6 +9,7 @@ import 'package:hayati/features/focus/focus_screen.dart';
 import 'package:hayati/features/journal/journal_screen.dart';
 import 'package:hayati/features/money/money_screen.dart';
 import 'package:hayati/features/more/more_screen.dart';
+import 'package:hayati/features/more/settings_screen.dart';
 import 'package:hayati/features/ramadan/ramadan_screen.dart';
 import 'package:hayati/features/stats/stats_screen.dart';
 import 'package:hayati/features/tasks/tasks_screen.dart';
@@ -34,6 +35,7 @@ void main() {
     'money': const MoneyScreen(),
     'habits': const HabitsScreen(),
     'more': const MoreScreen(),
+    'settings': const SettingsScreen(),
     'journal': const JournalScreen(),
     'family': const FamilyScreen(),
     'stats': const StatsScreen(),

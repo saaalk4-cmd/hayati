@@ -15,6 +15,7 @@ import 'package:hayati/features/auth/login_screen.dart';
 import 'package:hayati/features/family/family_screen.dart';
 import 'package:hayati/features/journal/journal_screen.dart';
 import 'package:hayati/features/more/more_screen.dart';
+import 'package:hayati/features/more/settings_screen.dart';
 import 'package:hayati/features/ramadan/ramadan_screen.dart';
 import 'package:hayati/features/stats/stats_screen.dart';
 import 'package:hayati/features/tasks/tasks_screen.dart';
@@ -123,6 +124,7 @@ void main() {
   testWidgets('login', (t) => _shot(t, const LoginScreen(), 'login'));
   testWidgets('tasks', (t) => _shot(t, const TasksScreen(), 'tasks'));
   testWidgets('more', (t) => _shot(t, const MoreScreen(), 'more'));
+  testWidgets('settings', (t) => _shot(t, const SettingsScreen(), 'settings'));
   testWidgets('assistant', (t) => _shot(t, const AssistantScreen(), 'assistant'));
   testWidgets('stats', (t) => _shot(t, const StatsScreen(), 'stats'));
   testWidgets('journal', (t) => _shot(t, const JournalScreen(), 'journal'));
