@@ -67,18 +67,29 @@ jobs:
           FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
           GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
         run: |
-          flutter build apk --release \
-            --dart-define=FIREBASE_API_KEY="$FIREBASE_API_KEY" \
-            --dart-define=FIREBASE_APP_ID="$FIREBASE_APP_ID" \
-            --dart-define=FIREBASE_SENDER_ID="$FIREBASE_SENDER_ID" \
-            --dart-define=FIREBASE_PROJECT_ID="$FIREBASE_PROJECT_ID" \
-            --dart-define=FIREBASE_STORAGE_BUCKET="$FIREBASE_STORAGE_BUCKET" \
+          DEFINES=(
+            --dart-define=FIREBASE_API_KEY="$FIREBASE_API_KEY"
+            --dart-define=FIREBASE_APP_ID="$FIREBASE_APP_ID"
+            --dart-define=FIREBASE_SENDER_ID="$FIREBASE_SENDER_ID"
+            --dart-define=FIREBASE_PROJECT_ID="$FIREBASE_PROJECT_ID"
+            --dart-define=FIREBASE_STORAGE_BUCKET="$FIREBASE_STORAGE_BUCKET"
             --dart-define=GOOGLE_SERVER_CLIENT_ID="$GOOGLE_SERVER_CLIENT_ID"
+          )
+          # APK عام (بيشتغل على أي تليفون) + APK أصغر لكل نوع معالج
+          flutter build apk --release "${DEFINES[@]}"
+          flutter build apk --release --split-per-abi "${DEFINES[@]}"
+          ls -lh build/app/outputs/flutter-apk/*.apk
 
       - uses: actions/upload-artifact@v4
         with:
           name: hayati-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+      # الأصغر: arm64 لمعظم التليفونات الحديثة
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hayati-apk-per-abi
+          path: build/app/outputs/flutter-apk/app-*-release.apk
 
   functions:
     name: Cloud Functions (type-check)
