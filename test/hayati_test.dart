@@ -26,6 +26,7 @@ import 'package:hayati/features/worship/prayer_service.dart';
 import 'package:hayati/features/worship/prayer_settings.dart';
 import 'package:hayati/features/worship/quran_progress.dart';
 import 'package:hayati/features/worship/qada.dart';
+import 'package:hayati/features/worship/islamic_occasions.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -748,5 +749,25 @@ void main() {
         40,
       );
     });
+  });
+
+  test('islamic occasions upcoming and ordered', () {
+    final now = DateTime(2026, 11, 23);
+    final list = upcomingIslamicOccasions(now);
+    expect(list.length, islamicOccasions.length);
+    for (var i = 1; i < list.length; i++) {
+      expect(!list[i].date.isBefore(list[i - 1].date), isTrue);
+    }
+    expect(
+      list.every((o) => o.daysFrom(now) >= 0 && o.daysFrom(now) <= 366),
+      isTrue,
+    );
+    final ramadan = list.firstWhere((o) => o.occasion.id == 'ramadan');
+    final eid = list.firstWhere((o) => o.occasion.id == 'eid_fitr');
+    expect(eid.date.isAfter(ramadan.date), isTrue);
+    // عرفة قبل الأضحى بيوم
+    final arafah = list.firstWhere((o) => o.occasion.id == 'arafah');
+    final adha = list.firstWhere((o) => o.occasion.id == 'eid_adha');
+    expect(adha.date.difference(arafah.date).inDays, 1);
   });
 }

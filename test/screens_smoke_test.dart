@@ -16,6 +16,7 @@ import 'package:hayati/features/tasks/tasks_screen.dart';
 import 'package:hayati/features/today/today_screen.dart';
 import 'package:hayati/features/worship/quran_screen.dart';
 import 'package:hayati/features/worship/qada_screen.dart';
+import 'package:hayati/features/worship/islamic_occasions_screen.dart';
 import 'package:hayati/features/worship/tasbeeh_screen.dart';
 import 'package:hayati/features/worship/worship_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -43,6 +44,7 @@ void main() {
     'quran': const QuranScreen(),
     'tasbeeh': const TasbeehScreen(),
     'qada': const QadaScreen(),
+    'islamic_occasions': const IslamicOccasionsScreen(),
     'focus': const FocusScreen(),
   };
 

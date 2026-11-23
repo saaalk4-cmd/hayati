@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/app_config.dart';
 import '../../core/utils/date_utils.dart';
 import '../../data/user_store.dart';
+import '../worship/islamic_occasions.dart';
 import '../worship/prayer_service.dart';
 import '../worship/prayer_settings.dart';
 
@@ -171,6 +172,10 @@ class ChatController extends Notifier<ChatState> {
       },
       'nextPrayer': {'name': next.name.name, 'time': hm(next.time)},
       'hijri': HayatiDates.hijri(DateTime.now()),
+      'islamicOccasion': () {
+        final o = upcomingIslamicOccasions(DateTime.now()).first;
+        return '${o.occasion.name} بعد ${o.daysFrom(DateTime.now())} يوم';
+      }(),
     };
   }
 

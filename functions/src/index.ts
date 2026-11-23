@@ -67,6 +67,7 @@ const RequestSchema = z.object({
         .object({ name: z.string().max(10), time: z.string().max(8) })
         .optional(),
       hijri: z.string().max(40).optional(),
+      islamicOccasion: z.string().max(80).optional(),
     })
     .optional(),
   timezoneOffsetMinutes: z.number().int().min(-900).max(900).optional(),
@@ -884,7 +885,9 @@ function describeContext(ctx: z.infer<typeof RequestSchema>["context"]): string 
   const next = ctx.nextPrayer
     ? `\nالصلاة الجاية: ${names[ctx.nextPrayer.name] ?? ctx.nextPrayer.name} الساعة ${ctx.nextPrayer.time}.`
     : "";
-  const hijri = ctx.hijri ? `\nالتاريخ الهجري: ${ctx.hijri}.` : "";
+  const hijri =
+    (ctx.hijri ? `\nالتاريخ الهجري: ${ctx.hijri}.` : "") +
+    (ctx.islamicOccasion ? `\nأقرب مناسبة إسلامية: ${ctx.islamicOccasion}.` : "");
   return `${hijri}\nمواقيت الصلاة النهارده${ctx.place ? ` (${ctx.place})` : ""}: ${times}.${next}`;
 }
 

@@ -93,6 +93,7 @@ List<(DateTime, String)> upcomingFastingDays(
   DateTime from, {
   required bool monThu,
   required bool whiteDays,
+  bool special = true,
   int days = 21,
 }) {
   final out = <(DateTime, String)>[];
@@ -104,6 +105,16 @@ List<(DateTime, String)> upcomingFastingDays(
     );
     // رمضان (9): الصيام فرض، ويوم العيد (1 شوال) و10-13 ذو الحجة ممنوع فيهم الصيام
     if (h.hMonth == 9) continue;
+    // صيام عرفة وتاسوعاء وعاشوراء (أولوية على الاتنين والخميس)
+    if (special &&
+        ((h.hMonth == 12 && h.hDay == 9) ||
+            (h.hMonth == 1 && (h.hDay == 9 || h.hDay == 10)))) {
+      final name = h.hMonth == 12
+          ? 'يوم عرفة'
+          : (h.hDay == 9 ? 'يوم تاسوعاء' : 'يوم عاشوراء');
+      out.add((d, 'بكرة $name — صيام مستحب'));
+      continue;
+    }
     if (h.hMonth == 10 && h.hDay == 1) continue;
     if (h.hMonth == 12 && h.hDay >= 10 && h.hDay <= 13) continue;
     if (whiteDays && h.hDay == 13) {

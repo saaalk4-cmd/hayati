@@ -22,6 +22,7 @@ import '../money/money_repository.dart';
 import '../money/money_screen.dart';
 import '../habits/habits_screen.dart';
 import '../tasks/task_tile.dart';
+import '../worship/islamic_occasions.dart';
 import '../worship/prayer_log.dart';
 import '../worship/prayer_service.dart';
 import '../worship/worship_screen.dart';
@@ -440,7 +441,12 @@ class _UpcomingCard extends ConsumerWidget {
         .where((p) => p.isDue(now) && p.lastContact != null)
         .take(3)
         .toList();
-    if (occasions.isEmpty && due.isEmpty) return const SizedBox.shrink();
+    final islamic = upcomingIslamicOccasions(now)
+        .where((o) => o.daysFrom(now) <= 7)
+        .toList();
+    if (occasions.isEmpty && due.isEmpty && islamic.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Padding(
       padding: const EdgeInsets.only(top: 12),
       child: SectionCard(
@@ -450,6 +456,13 @@ class _UpcomingCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            for (final o in islamic)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Text(
+                  '${o.occasion.emoji} ${o.occasion.name} • ${o.daysFrom(now) == 0 ? 'النهارده' : 'بعد ${o.daysFrom(now)} يوم'}${o.occasion.fasting ? ' (صيام مستحب)' : ''}',
+                ),
+              ),
             for (final o in occasions)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2),

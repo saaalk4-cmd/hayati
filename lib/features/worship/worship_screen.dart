@@ -10,6 +10,7 @@ import 'prayer_log.dart';
 import 'prayer_service.dart';
 import 'prayer_settings.dart';
 import 'quran_progress.dart';
+import 'islamic_occasions.dart';
 import 'qada.dart';
 import 'tasbeeh_screen.dart';
 import '../../core/theme/palettes.dart';
@@ -125,6 +126,19 @@ class WorshipScreen extends ConsumerWidget {
               subtitle: Text(_qadaLine(ref.watch(qadaProvider).value)),
               trailing: const Icon(Icons.chevron_left),
               onTap: () => context.push('/worship/qada'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Text('🌙', style: TextStyle(fontSize: 28)),
+              title: const Text(
+                'المناسبات الإسلامية',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(_nextOccasionLine()),
+              trailing: const Icon(Icons.chevron_left),
+              onTap: () => context.push('/worship/occasions'),
             ),
           ),
           const SizedBox(height: 12),
@@ -417,4 +431,11 @@ class _CrescentMark extends StatelessWidget {
 String _qadaLine(QadaState? q) {
   if (q == null || q.totalOwed == 0) return 'تابع الصلوات الفايتة وقضاها';
   return 'فاضل ${q.totalOwed} صلاة';
+}
+
+String _nextOccasionLine() {
+  final now = DateTime.now();
+  final next = upcomingIslamicOccasions(now).first;
+  final d = next.daysFrom(now);
+  return '${next.occasion.name} ${d == 0 ? 'النهارده' : 'بعد $d يوم'}';
 }
