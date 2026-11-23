@@ -6,6 +6,11 @@
 GitHub ← **Actions** ← آخر تشغيل ناجح ← **Artifacts** ← `hayati-apk`
 (اللينك المباشر تحت في «حالة البناء»)
 
+## 🟢 حالة البناء
+آخر نسخة كاملة اتبنت بنجاح (بناء رقم 21):
+https://github.com/saaalk4-cmd/hayati/actions/runs/45085501171
+انزل لتحت عند **Artifacts** ← `hayati-apk`
+
 ## ✅ اللي اتعمل الليلة
 
 | # | المهمة | |
