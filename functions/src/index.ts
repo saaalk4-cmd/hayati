@@ -813,6 +813,63 @@ function buildTools(uid: string, actions: string[]) {
     },
   });
 
+  const goalsRef = userDoc.collection("goals").doc("state");
+  type GoalDoc = { id: string; title: string; emoji?: string; steps?: { t: string; d: boolean }[]; deadline?: string };
+  const goalsTool = betaZodTool({
+    name: "goals",
+    description:
+      "The user's long-term goals, each with steps. action=list returns goals with step indexes and progress. action=add creates a goal with steps (break a big goal into 3-6 concrete steps if the user didn't give any). action=toggle_step marks a step done/undone by goal_id and step_index.",
+    inputSchema: z.object({
+      action: z.enum(["list", "add", "toggle_step"]),
+      title: z.string().max(120).describe("For add; empty otherwise"),
+      emoji: z.string().max(8).describe("For add, one emoji; empty otherwise"),
+      steps: z.array(z.string().max(120)).max(12).describe("For add; [] otherwise"),
+      deadline: dayKey.nullable().describe("For add, optional yyyy-MM-dd"),
+      goal_id: z.string().max(64).describe("For toggle_step; empty otherwise"),
+      step_index: z.number().int().min(0).max(50).describe("For toggle_step; 0 otherwise"),
+    }),
+    run: async ({ action, title, emoji, steps, deadline, goal_id, step_index }) => {
+      if (action === "list") {
+        const list = ((await goalsRef.get()).data()?.list ?? []) as GoalDoc[];
+        return JSON.stringify(
+          list.map((g) => ({
+            id: g.id,
+            title: g.title,
+            deadline: g.deadline ?? null,
+            steps: (g.steps ?? []).map((s, i) => ({ index: i, title: s.t, done: s.d })),
+            done: (g.steps ?? []).filter((s) => s.d).length,
+            total: (g.steps ?? []).length,
+          })),
+        );
+      }
+      let message = "";
+      await db.runTransaction(async (tx) => {
+        const list = [...(((await tx.get(goalsRef)).data()?.list ?? []) as GoalDoc[])];
+        if (action === "add") {
+          if (!title.trim()) throw new Error("title required");
+          const g: GoalDoc = {
+            id: `${Date.now()}`,
+            title: title.trim(),
+            emoji: emoji || "🎯",
+            steps: steps.filter((s) => s.trim()).map((s) => ({ t: s.trim(), d: false })),
+          };
+          if (deadline) g.deadline = deadline;
+          list.push(g);
+          message = `ضفت هدف «${g.title}» بـ ${g.steps!.length} خطوات`;
+        } else {
+          const g = list.find((x) => x.id === goal_id);
+          const step = g?.steps?.[step_index];
+          if (!g || !step) throw new Error("goal or step not found");
+          step.d = !step.d;
+          message = `${step.d ? "خلّصت" : "رجّعت"} خطوة «${step.t}» في «${g.title}»`;
+        }
+        tx.set(goalsRef, { list }, { merge: true });
+      });
+      actions.push(message);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
   const focusTool = betaZodTool({
     name: "get_focus_stats",
     description:
@@ -844,6 +901,7 @@ function buildTools(uid: string, actions: string[]) {
   return [
     focusTool,
     qadaTool,
+    goalsTool,
     logRamadan,
     dayOverview,
     weekSummary,

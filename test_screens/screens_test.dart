@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hayati/features/goals/goals_screen.dart';
 import 'package:hayati/features/calendar/calendar_screen.dart';
 import 'package:hayati/core/theme/app_theme.dart';
 import 'package:hayati/core/theme/palettes.dart';
@@ -135,4 +136,5 @@ void main() {
   testWidgets('tasbeeh', (t) => _shot(t, const TasbeehScreen(), 'tasbeeh'));
   testWidgets('adhkar', (t) => _shot(t, const AdhkarScreen(groupId: 'morning'), 'adhkar'));
   testWidgets('calendar', (t) => _shot(t, const CalendarScreen(), 'calendar', dark: true));
+  testWidgets('goals', (t) => _shot(t, const GoalsScreen(), 'goals', dark: true));
 }

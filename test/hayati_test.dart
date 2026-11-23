@@ -27,6 +27,7 @@ import 'package:hayati/features/worship/prayer_settings.dart';
 import 'package:hayati/features/worship/quran_progress.dart';
 import 'package:hayati/features/worship/qada.dart';
 import 'package:hayati/features/worship/islamic_occasions.dart';
+import 'package:hayati/features/goals/goals.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -769,5 +770,25 @@ void main() {
     final arafah = list.firstWhere((o) => o.occasion.id == 'arafah');
     final adha = list.firstWhere((o) => o.occasion.id == 'eid_adha');
     expect(adha.date.difference(arafah.date).inDays, 1);
+  });
+
+  test('الأهداف: تقدّم الخطوات والحفظ والقراءة', () {
+    const g = Goal(
+      id: 'a',
+      title: 'جزء عمّ',
+      steps: [GoalStep('1'), GoalStep('2')],
+    );
+    expect(g.progress, 0);
+    var list = upsertGoal(const [], g);
+    list = toggleStep(list, 'a', 0);
+    expect(list.single.progress, 0.5);
+    list = toggleStep(list, 'a', 1);
+    expect(list.single.completed, isTrue);
+    list = toggleStep(list, 'a', 9); // خطوة مش موجودة: مفيش تغيير
+    expect(list.single.doneCount, 2);
+    final back = Goal.fromMap(list.single.toMap());
+    expect(back.title, 'جزء عمّ');
+    expect(back.steps.map((s) => s.done), [true, true]);
+    expect(upsertGoal(list, back.copyWith(title: 'x')).single.title, 'x');
   });
 }

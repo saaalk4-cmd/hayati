@@ -23,6 +23,7 @@ const userCollections = [
   'tasbeeh',
   'assistant',
   'qada',
+  'goals',
   'focus',
 ];
 

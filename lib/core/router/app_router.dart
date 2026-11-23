@@ -7,6 +7,7 @@ import '../../features/assistant/assistant_screen.dart';
 import '../../features/calendar/calendar_screen.dart';
 import '../../features/auth/login_screen.dart';
 import '../../features/family/family_screen.dart';
+import '../../features/goals/goals_screen.dart';
 import '../../features/focus/focus_screen.dart';
 import '../../features/habits/habit_detail_screen.dart';
 import '../../features/habits/habits_screen.dart';
@@ -62,6 +63,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingScreen()),
       GoRoute(path: '/focus', builder: (_, _) => const FocusScreen()),
       GoRoute(path: '/calendar', builder: (_, _) => const CalendarScreen()),
+      GoRoute(path: '/goals', builder: (_, _) => const GoalsScreen()),
       GoRoute(
         path: '/assistant',
         builder: (_, state) =>
