@@ -52,13 +52,14 @@ class SettingsScreen extends ConsumerWidget {
               title: Text('وضع الضيف'),
               subtitle: Text('بياناتك محفوظة على الموبايل ده بس'),
             ),
-          ListTile(
-            leading: const Icon(Icons.logout),
-            title: Text(
-              session is UserSession ? 'تسجيل الخروج' : 'تسجيل الدخول بحساب',
+          if (session is UserSession || ref.watch(firebaseReadyProvider))
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: Text(
+                session is UserSession ? 'تسجيل الخروج' : 'تسجيل الدخول بحساب',
+              ),
+              onTap: () => ref.read(sessionProvider.notifier).signOut(),
             ),
-            onTap: () => ref.read(sessionProvider.notifier).signOut(),
-          ),
           section('الأمان والمظهر'),
           SwitchListTile(
             secondary: const Icon(Icons.lock_outline),

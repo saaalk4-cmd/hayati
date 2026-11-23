@@ -245,16 +245,19 @@ class _Welcome extends StatelessWidget {
   }
 }
 
-class _Disabled extends StatelessWidget {
+class _Disabled extends ConsumerWidget {
   const _Disabled();
 
   @override
-  Widget build(BuildContext context) {
-    return const Center(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final online = ref.watch(firebaseReadyProvider);
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(32),
+        padding: const EdgeInsets.all(32),
         child: Text(
-          'المساعد الذكي محتاج حساب عشان يحفظ مهامك ويوصل لها.\nسجّل الدخول من «المزيد» ← «الحساب».',
+          online
+              ? 'المساعد الذكي محتاج حساب عشان يحفظ مهامك ويوصل لها.\nسجّل الدخول من «المزيد» ← «الإعدادات» ← «تسجيل الدخول بحساب».'
+              : 'المساعد الذكي والحسابات لسه مش متفعّلين في النسخة دي.\nلحد ما يتفعّلوا، كل حاجة شغالة وبياناتك محفوظة على الموبايل.',
           textAlign: TextAlign.center,
         ),
       ),
