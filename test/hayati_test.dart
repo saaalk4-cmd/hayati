@@ -14,6 +14,7 @@ import 'package:hayati/features/money/money_screen.dart';
 import 'package:hayati/features/onboarding/onboarding_screen.dart';
 import 'package:hayati/data/session.dart';
 import 'package:hayati/data/user_store.dart';
+import 'package:hayati/features/account/backup_restore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hayati/features/stats/stats.dart';
 import 'package:hayati/features/ramadan/ramadan.dart';
@@ -711,5 +712,41 @@ void main() {
     expect(s.totalDone, 5);
     expect(s.daysToFinish, 5);
     expect(s.progress, closeTo(5 / 19, 0.001));
+  });
+
+  group('Backup restore', () {
+    test('parse account export and guest export', () {
+      final account = parseBackup(
+        '{"app":"hayati","tasks":{"t1":{"title":"a"}},"prayers":{"2026-11-23":{"fajr":"mosque"}}}',
+      );
+      expect(account.length, 2);
+      expect(
+        account.any((d) => d.collection == 'prayers' && d.id == '2026-11-23'),
+        isTrue,
+      );
+      final guest = parseBackup(
+        '{"app":"hayati","local_habits":{"h1":{"title":"b"}},"store/quran/progress":{"page":5}}',
+      );
+      expect(guest.map((d) => d.collection).toSet(), {'habits', 'quran'});
+      expect(() => parseBackup('{"x":1}'), throwsFormatException);
+    });
+
+    test('restore into guest storage merges', () async {
+      SharedPreferences.setMockInitialValues({
+        'local_tasks': '{"old":{"title":"قديمة","done":false,"createdAt":1}}',
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final docs = parseBackup(
+        '{"app":"hayati","tasks":{"new":{"title":"جديدة","done":false,"createdAt":2}},"quran":{"progress":{"page":40}}}',
+      );
+      final n = await applyBackup(docs, const GuestSession(), prefs);
+      expect(n, 2);
+      final tasks = await LocalTasksRepository(prefs).watch().first;
+      expect(tasks.map((t) => t.title).toSet(), {'قديمة', 'جديدة'});
+      expect(
+        (await LocalUserStore(prefs).get('quran', 'progress'))!['page'],
+        40,
+      );
+    });
   });
 }

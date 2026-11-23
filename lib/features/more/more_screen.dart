@@ -6,6 +6,7 @@ import '../../data/session.dart';
 import '../../core/notifications.dart';
 import '../../core/widgets/palette_picker.dart';
 import '../account/account_data.dart';
+import '../account/backup_restore.dart';
 import '../reminders/smart_reminders.dart';
 import '../account/privacy_screen.dart';
 import '../lock/lock_service.dart';
@@ -168,6 +169,36 @@ class MoreScreen extends ConsumerWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('تعذّر التصدير، جرّب تاني')),
+                  );
+                }
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.upload_file_outlined),
+            title: const Text('استرجاع من نسخة احتياطية'),
+            subtitle: const Text(
+              'اختار ملف التصدير وهنرجّع بياناتك (من غير ما نمسح حاجة)',
+            ),
+            onTap: () async {
+              try {
+                final n = await pickAndRestore(ref);
+                if (n != null && context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('رجّعنا $n عنصر ✓')));
+                }
+              } on FormatException catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(SnackBar(content: Text(e.message)));
+                }
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('تعذّر الاسترجاع، اتأكد من الملف'),
+                    ),
                   );
                 }
               }
