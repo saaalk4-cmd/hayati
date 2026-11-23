@@ -13,6 +13,7 @@ import 'package:hayati/features/stats/stats_screen.dart';
 import 'package:hayati/features/tasks/tasks_screen.dart';
 import 'package:hayati/features/today/today_screen.dart';
 import 'package:hayati/features/worship/quran_screen.dart';
+import 'package:hayati/features/worship/qada_screen.dart';
 import 'package:hayati/features/worship/tasbeeh_screen.dart';
 import 'package:hayati/features/worship/worship_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -38,6 +39,7 @@ void main() {
     'ramadan': const RamadanScreen(),
     'quran': const QuranScreen(),
     'tasbeeh': const TasbeehScreen(),
+    'qada': const QadaScreen(),
   };
 
   for (final e in screens.entries) {
@@ -51,19 +53,21 @@ void main() {
         tester.view.physicalSize = const Size(1080, 2340);
         tester.view.devicePixelRatio = 3;
         addTearDown(tester.view.reset);
-        await tester.pumpWidget(ProviderScope(
-          overrides: [
-            sharedPrefsProvider.overrideWithValue(prefs),
-            firebaseReadyProvider.overrideWithValue(false),
-          ],
-          child: MaterialApp(
-            theme: dark ? AppTheme.dark() : AppTheme.light(),
-            locale: const Locale('ar'),
-            supportedLocales: const [Locale('ar')],
-            localizationsDelegates: GlobalMaterialLocalizations.delegates,
-            home: e.value,
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sharedPrefsProvider.overrideWithValue(prefs),
+              firebaseReadyProvider.overrideWithValue(false),
+            ],
+            child: MaterialApp(
+              theme: dark ? AppTheme.dark() : AppTheme.light(),
+              locale: const Locale('ar'),
+              supportedLocales: const [Locale('ar')],
+              localizationsDelegates: GlobalMaterialLocalizations.delegates,
+              home: e.value,
+            ),
           ),
-        ));
+        );
         for (var i = 0; i < 4; i++) {
           await tester.pump(const Duration(milliseconds: 100));
         }

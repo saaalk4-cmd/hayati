@@ -24,6 +24,7 @@ import 'package:hayati/features/worship/adhkar_data.dart';
 import 'package:hayati/features/worship/prayer_service.dart';
 import 'package:hayati/features/worship/prayer_settings.dart';
 import 'package:hayati/features/worship/quran_progress.dart';
+import 'package:hayati/features/worship/qada.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -698,5 +699,17 @@ void main() {
         contains('ضيف مهمة: قراءة سورة الكهف'),
       );
     });
+  });
+
+  test('qada state math', () {
+    const s = QadaState(
+      owed: {PrayerName.fajr: 10, PrayerName.dhuhr: 4},
+      done: {PrayerName.fajr: 5},
+      dailyGoal: 2,
+    );
+    expect(s.totalOwed, 14);
+    expect(s.totalDone, 5);
+    expect(s.daysToFinish, 5);
+    expect(s.progress, closeTo(5 / 19, 0.001));
   });
 }

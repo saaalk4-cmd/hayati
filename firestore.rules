@@ -64,6 +64,11 @@ service cloud.firestore {
         allow read, write: if isOwner(uid);
       }
 
+      // قضاء الصلوات: users/{uid}/qada/state
+      match /qada/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+
       // سجل الصلوات: users/{uid}/prayers/{yyyy-MM-dd}
       match /prayers/{day} {
         allow read, write: if isOwner(uid);

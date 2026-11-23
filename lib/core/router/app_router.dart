@@ -22,6 +22,7 @@ import '../../features/worship/adhkar_screen.dart';
 import '../../features/worship/prayer_settings_screen.dart';
 import '../../features/worship/qibla_screen.dart';
 import '../../features/worship/quran_screen.dart';
+import '../../features/worship/qada_screen.dart';
 import '../../features/worship/tasbeeh_screen.dart';
 import '../../features/worship/worship_screen.dart';
 
@@ -94,6 +95,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'tasbeeh',
                     builder: (_, _) => const TasbeehScreen(),
                   ),
+                  GoRoute(path: 'qada', builder: (_, _) => const QadaScreen()),
                   GoRoute(
                     path: 'adhkar/:group',
                     builder: (_, state) =>

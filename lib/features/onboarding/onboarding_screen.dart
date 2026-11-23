@@ -198,14 +198,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
             ),
             Padding(
               padding: const EdgeInsets.all(24),
-              child: FilledButton(
-                onPressed: last
-                    ? _finish
-                    : () => _page.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOut,
-                      ),
-                child: Text(last ? 'يلا نبدأ' : 'التالي'),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: last
+                      ? _finish
+                      : () => _page.nextPage(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOut,
+                        ),
+                  child: Text(last ? 'يلا نبدأ' : 'التالي'),
+                ),
               ),
             ),
           ],

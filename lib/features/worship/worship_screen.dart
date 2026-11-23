@@ -10,6 +10,7 @@ import 'prayer_log.dart';
 import 'prayer_service.dart';
 import 'prayer_settings.dart';
 import 'quran_progress.dart';
+import 'qada.dart';
 import 'tasbeeh_screen.dart';
 import '../../core/theme/palettes.dart';
 import '../../core/widgets/motion.dart';
@@ -111,6 +112,19 @@ class WorshipScreen extends ConsumerWidget {
               ),
               trailing: const Icon(Icons.chevron_left),
               onTap: () => context.push('/worship/tasbeeh'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Text('🕌', style: TextStyle(fontSize: 28)),
+              title: const Text(
+                'قضاء الصلوات',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(_qadaLine(ref.watch(qadaProvider).value)),
+              trailing: const Icon(Icons.chevron_left),
+              onTap: () => context.push('/worship/qada'),
             ),
           ),
           const SizedBox(height: 12),
@@ -385,4 +399,9 @@ class _CrescentMark extends StatelessWidget {
       ),
     );
   }
+}
+
+String _qadaLine(QadaState? q) {
+  if (q == null || q.totalOwed == 0) return 'تابع الصلوات الفايتة وقضاها';
+  return 'فاضل ${q.totalOwed} صلاة';
 }

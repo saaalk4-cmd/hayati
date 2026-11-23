@@ -75,6 +75,7 @@ const SYSTEM_PROMPT = `أنت «مساعد حياتي»، مساعد شخصي د
 - لما يطلب ملخص الأسبوع: نادِ get_week_summary، وقوله نقطة قوة ونقطة يتحسن فيها، بتشجيع ومن غير لوم.
 
 حدود:
+- تتابع معاه قضاء الصلوات الفايتة وتسجّل اللي قضاه (من غير فتاوى، ولو سأل سؤال فقهي انصحه يرجع لأهل العلم).
 - تفكّره بالمناسبات الجاية وتضيف أعياد ميلاد ومناسبات، وتشجعه على صلة الرحم وتسجّل لما يكلم حد من أهله. لو طلب حاجة منها، قوله إنها جاية قريب إن شاء الله، واعرض تضيفها كمهمة لو ده يفيده.
 - متألّفش آيات أو أحاديث. لو استشهدت بآية اذكر السورة ورقم الآية، ولو مش متأكد متستشهدش.
 - في الأسئلة الطبية أو القانونية أو المالية الكبيرة، قدّم معلومة عامة وانصحه يرجع لمتخصص.`;
@@ -758,7 +759,40 @@ function buildTools(uid: string, actions: string[]) {
     },
   });
 
+  const qadaRef = userDoc.collection("qada").doc("state");
+  const qadaTool = betaZodTool({
+    name: "qada_prayers",
+    description:
+      "Missed prayers to make up (qada). action=get returns remaining and done counts per prayer. action=log records that the user made up `count` of a prayer (or a full day of 5 when prayer=all).",
+    inputSchema: z.object({
+      action: z.enum(["get", "log"]),
+      prayer: z.enum(["fajr", "dhuhr", "asr", "maghrib", "isha", "all"]).describe("Ignored for get"),
+      count: z.number().int().min(1).max(100).describe("How many made up; 1 if unsure. Ignored for get"),
+    }),
+    run: async ({ action, prayer, count }) => {
+      if (action === "get") {
+        const d = (await qadaRef.get()).data() ?? {};
+        return JSON.stringify({ owed: d.owed ?? {}, done: d.done ?? {}, daily_goal_days: d.dailyGoal ?? 1 });
+      }
+      const targets = prayer === "all" ? [...prayerNames] : [prayer];
+      await db.runTransaction(async (tx) => {
+        const d = (await tx.get(qadaRef)).data() ?? {};
+        const owed = { ...(d.owed ?? {}) } as Record<string, number>;
+        const done = { ...(d.done ?? {}) } as Record<string, number>;
+        for (const p of targets) {
+          const n = Math.min(count, owed[p] ?? 0);
+          owed[p] = (owed[p] ?? 0) - n;
+          done[p] = (done[p] ?? 0) + n;
+        }
+        tx.set(qadaRef, { owed, done }, { merge: true });
+      });
+      actions.push(prayer === "all" ? `سجّلت قضاء ${count} يوم كامل` : `سجّلت قضاء ${count} ${prayerAr[prayer as (typeof prayerNames)[number]]}`);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
   return [
+    qadaTool,
     logRamadan,
     dayOverview,
     weekSummary,
