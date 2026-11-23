@@ -29,6 +29,10 @@ Future<void> _loadFont() async {
         .readAsBytesSync()
         .buffer)));
   await icons.load();
+  final emoji = FontLoader('NotoColorEmoji')
+    ..addFont(Future.value(ByteData.view(
+        File('/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf').readAsBytesSync().buffer)));
+  await emoji.load();
 }
 
 Map<String, Object> _seed() {
@@ -92,6 +96,7 @@ void main() {
   setUpAll(() async {
     AppTheme.useGoogleFonts = false;
     AppTheme.fallbackFontFamily = 'DejaVu';
+    AppTheme.fontFamilyFallback = ['NotoColorEmoji'];
     await initializeDateFormatting('ar');
     await _loadFont();
   });

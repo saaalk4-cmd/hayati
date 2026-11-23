@@ -7,6 +7,7 @@ class AppTheme {
   /// بيتقفل في سكريبت لقطات الشاشة (مفيش إنترنت لتحميل الخط)
   static bool useGoogleFonts = true;
   static String? fallbackFontFamily;
+  static List<String>? fontFamilyFallback;
 
   static ThemeData light() => _build(
     ColorScheme.fromSeed(
@@ -46,7 +47,10 @@ class AppTheme {
     );
     final text = useGoogleFonts
         ? GoogleFonts.cairoTextTheme(base.textTheme)
-        : base.textTheme.apply(fontFamily: fallbackFontFamily);
+        : base.textTheme.apply(
+            fontFamily: fallbackFontFamily,
+            fontFamilyFallback: fontFamilyFallback,
+          );
     return base.copyWith(
       textTheme: text,
       appBarTheme: AppBarTheme(

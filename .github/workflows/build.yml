@@ -9,6 +9,8 @@ on:
       - "docs/**"
       - "assets/brand/logo_options/**"
       - "assets/brand/screens/**"
+      - "assets/brand/store/**"
+      - "test_screens/out/**"
   pull_request:
   workflow_dispatch:
 
