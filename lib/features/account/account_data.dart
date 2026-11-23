@@ -20,6 +20,7 @@ const userCollections = [
   'money',
   'family',
   'ramadan',
+  'tasbeeh',
 ];
 
 /// مفاتيح التخزين المحلي (وضع الضيف)

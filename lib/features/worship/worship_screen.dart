@@ -10,6 +10,7 @@ import 'prayer_log.dart';
 import 'prayer_service.dart';
 import 'prayer_settings.dart';
 import 'quran_progress.dart';
+import 'tasbeeh_screen.dart';
 
 class WorshipScreen extends ConsumerWidget {
   const WorshipScreen({super.key});
@@ -94,6 +95,21 @@ class WorshipScreen extends ConsumerWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const Text('📿', style: TextStyle(fontSize: 28)),
+              title: const Text(
+                'السبحة',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              subtitle: Text(
+                'سبّحت النهارده ${ref.watch(tasbeehTodayProvider).value ?? 0} مرة',
+              ),
+              trailing: const Icon(Icons.chevron_left),
+              onTap: () => context.push('/worship/tasbeeh'),
+            ),
           ),
           const SizedBox(height: 12),
           GestureDetector(

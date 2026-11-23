@@ -22,6 +22,7 @@ import '../../features/worship/adhkar_screen.dart';
 import '../../features/worship/prayer_settings_screen.dart';
 import '../../features/worship/qibla_screen.dart';
 import '../../features/worship/quran_screen.dart';
+import '../../features/worship/tasbeeh_screen.dart';
 import '../../features/worship/worship_screen.dart';
 
 /// يخلي GoRouter يعيد تقييم الـ redirect لما الجلسة تتغير
@@ -88,6 +89,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'ramadan',
                     builder: (_, _) => const RamadanScreen(),
+                  ),
+                  GoRoute(
+                    path: 'tasbeeh',
+                    builder: (_, _) => const TasbeehScreen(),
                   ),
                   GoRoute(
                     path: 'adhkar/:group',
