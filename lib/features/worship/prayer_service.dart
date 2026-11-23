@@ -32,12 +32,15 @@ DayPrayerTimes computePrayerTimes(PrayerSettings s, DateTime day) {
     DateComponents(day.year, day.month, day.day),
     s.parameters,
   );
+  // التعديل اليدوي بالدقايق (عشان يطابق توقيت مسجدك)
+  DateTime adj(PrayerName p, DateTime t) =>
+      t.toLocal().add(Duration(minutes: s.offsets[p.name] ?? 0));
   return DayPrayerTimes(DateTime(day.year, day.month, day.day), {
-    PrayerName.fajr: pt.fajr.toLocal(),
-    PrayerName.dhuhr: pt.dhuhr.toLocal(),
-    PrayerName.asr: pt.asr.toLocal(),
-    PrayerName.maghrib: pt.maghrib.toLocal(),
-    PrayerName.isha: pt.isha.toLocal(),
+    PrayerName.fajr: adj(PrayerName.fajr, pt.fajr),
+    PrayerName.dhuhr: adj(PrayerName.dhuhr, pt.dhuhr),
+    PrayerName.asr: adj(PrayerName.asr, pt.asr),
+    PrayerName.maghrib: adj(PrayerName.maghrib, pt.maghrib),
+    PrayerName.isha: adj(PrayerName.isha, pt.isha),
   }, pt.sunrise.toLocal());
 }
 

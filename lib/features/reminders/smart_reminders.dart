@@ -99,7 +99,9 @@ List<(DateTime, String)> upcomingFastingDays(
   final start = DateTime(from.year, from.month, from.day);
   for (var i = 1; i <= days; i++) {
     final d = start.add(Duration(days: i));
-    final h = HijriCalendar.fromDate(d);
+    final h = HijriCalendar.fromDate(
+      d.add(Duration(days: HayatiDates.hijriAdjust)),
+    );
     // رمضان (9): الصيام فرض، ويوم العيد (1 شوال) و10-13 ذو الحجة ممنوع فيهم الصيام
     if (h.hMonth == 9) continue;
     if (h.hMonth == 10 && h.hDay == 1) continue;

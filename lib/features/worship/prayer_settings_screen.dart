@@ -2,6 +2,7 @@ import 'package:adhan/adhan.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/utils/date_utils.dart';
 import 'adhan_notifications.dart';
 import 'prayer_service.dart';
 import 'prayer_settings.dart';
@@ -106,6 +107,19 @@ class _PrayerSettingsScreenState extends ConsumerState<PrayerSettingsScreen> {
             },
           ),
           const Divider(),
+          ListTile(
+            leading: const Icon(Icons.calendar_month_outlined),
+            title: const Text('تعديل التاريخ الهجري'),
+            subtitle: Text(HayatiDates.hijri(DateTime.now())),
+            trailing: _Stepper(
+              value: s.hijriAdjust,
+              label: s.hijriAdjust == 0
+                  ? '0'
+                  : '${s.hijriAdjust > 0 ? '+' : ''}${s.hijriAdjust} يوم',
+              onChanged: (v) => notifier.setHijriAdjust(v),
+            ),
+          ),
+          const Divider(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
             child: Text(
@@ -118,11 +132,24 @@ class _PrayerSettingsScreenState extends ConsumerState<PrayerSettingsScreen> {
             title: const Text('الشروق'),
             trailing: Text(formatPrayerTime(times.sunrise)),
           ),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: Text(
+              'عدّل بالدقايق لو مسجدك بيأذّن قبل أو بعد',
+              style: TextStyle(fontSize: 12),
+            ),
+          ),
           for (final p in PrayerName.values)
             ListTile(
               dense: true,
-              title: Text(p.ar),
-              trailing: Text(formatPrayerTime(times[p])),
+              title: Text('${p.ar} • ${formatPrayerTime(times[p])}'),
+              trailing: _Stepper(
+                value: s.offsets[p.name] ?? 0,
+                label: (s.offsets[p.name] ?? 0) == 0
+                    ? '0'
+                    : '${(s.offsets[p.name] ?? 0) > 0 ? '+' : ''}${s.offsets[p.name]} د',
+                onChanged: (v) => notifier.setOffset(p.name, v),
+              ),
             ),
           const Padding(
             padding: EdgeInsets.all(16),
@@ -135,4 +162,33 @@ class _PrayerSettingsScreenState extends ConsumerState<PrayerSettingsScreen> {
       ),
     );
   }
+}
+
+class _Stepper extends StatelessWidget {
+  const _Stepper({
+    required this.value,
+    required this.label,
+    required this.onChanged,
+  });
+  final int value;
+  final String label;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      IconButton(
+        visualDensity: VisualDensity.compact,
+        onPressed: () => onChanged(value + 1),
+        icon: const Icon(Icons.add_circle_outline),
+      ),
+      SizedBox(width: 56, child: Text(label, textAlign: TextAlign.center)),
+      IconButton(
+        visualDensity: VisualDensity.compact,
+        onPressed: () => onChanged(value - 1),
+        icon: const Icon(Icons.remove_circle_outline),
+      ),
+    ],
+  );
 }

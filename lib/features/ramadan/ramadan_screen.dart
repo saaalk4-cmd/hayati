@@ -4,9 +4,12 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../worship/prayer_service.dart';
+import '../worship/prayer_settings.dart';
 import 'ramadan.dart';
 
-final ramadanAdjustProvider = Provider<int>((ref) => 0);
+final ramadanAdjustProvider = Provider<int>(
+  (ref) => ref.watch(prayerSettingsProvider.select((s) => s.hijriAdjust)),
+);
 
 class RamadanScreen extends ConsumerWidget {
   const RamadanScreen({super.key});

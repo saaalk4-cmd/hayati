@@ -2,6 +2,7 @@ import 'package:adhan/adhan.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../core/utils/date_utils.dart';
 import '../../data/session.dart';
 
 /// إعدادات المواقيت (محفوظة على الجهاز لأنها مرتبطة بمكانه)
@@ -14,6 +15,8 @@ class PrayerSettings {
     required this.madhab,
     required this.adhanNotifications,
     required this.hasRealLocation,
+    this.offsets = const {},
+    this.hijriAdjust = 0,
   });
 
   final double latitude;
@@ -25,6 +28,12 @@ class PrayerSettings {
 
   /// false لو لسه بنستخدم القاهرة كموقع افتراضي
   final bool hasRealLocation;
+
+  /// تعديل يدوي بالدقايق لكل صلاة (اسم الصلاة => دقايق، ممكن تكون بالسالب)
+  final Map<String, int> offsets;
+
+  /// تعديل التاريخ الهجري بالأيام (±2) حسب رؤية الهلال في بلدك
+  final int hijriAdjust;
 
   Coordinates get coordinates => Coordinates(latitude, longitude);
 
@@ -39,6 +48,8 @@ class PrayerSettings {
     Madhab? madhab,
     bool? adhanNotifications,
     bool? hasRealLocation,
+    Map<String, int>? offsets,
+    int? hijriAdjust,
   }) => PrayerSettings(
     latitude: latitude ?? this.latitude,
     longitude: longitude ?? this.longitude,
@@ -47,6 +58,8 @@ class PrayerSettings {
     madhab: madhab ?? this.madhab,
     adhanNotifications: adhanNotifications ?? this.adhanNotifications,
     hasRealLocation: hasRealLocation ?? this.hasRealLocation,
+    offsets: offsets ?? this.offsets,
+    hijriAdjust: hijriAdjust ?? this.hijriAdjust,
   );
 }
 
@@ -73,6 +86,7 @@ class PrayerSettingsController extends Notifier<PrayerSettings> {
       (m) => m.name == prefs.getString('${_p}method'),
       orElse: () => CalculationMethod.egyptian,
     );
+    HayatiDates.hijriAdjust = prefs.getInt('${_p}hijri_adj') ?? 0;
     return PrayerSettings(
       latitude: prefs.getDouble('${_p}lat') ?? 30.0444,
       longitude: prefs.getDouble('${_p}lng') ?? 31.2357,
@@ -83,10 +97,17 @@ class PrayerSettingsController extends Notifier<PrayerSettings> {
           : Madhab.shafi,
       adhanNotifications: prefs.getBool('${_p}adhan') ?? true,
       hasRealLocation: prefs.getDouble('${_p}lat') != null,
+      offsets: {
+        for (final n in const ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'])
+          if ((prefs.getInt('${_p}off_$n') ?? 0) != 0)
+            n: prefs.getInt('${_p}off_$n')!,
+      },
+      hijriAdjust: prefs.getInt('${_p}hijri_adj') ?? 0,
     );
   }
 
   Future<void> _save(PrayerSettings s) async {
+    HayatiDates.hijriAdjust = s.hijriAdjust;
     final prefs = ref.read(sharedPrefsProvider);
     if (s.hasRealLocation) {
       await prefs.setDouble('${_p}lat', s.latitude);
@@ -96,6 +117,10 @@ class PrayerSettingsController extends Notifier<PrayerSettings> {
     await prefs.setString('${_p}method', s.method.name);
     await prefs.setString('${_p}madhab', s.madhab.name);
     await prefs.setBool('${_p}adhan', s.adhanNotifications);
+    for (final n in const ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']) {
+      await prefs.setInt('${_p}off_$n', s.offsets[n] ?? 0);
+    }
+    await prefs.setInt('${_p}hijri_adj', s.hijriAdjust);
     state = s;
   }
 
@@ -103,6 +128,13 @@ class PrayerSettingsController extends Notifier<PrayerSettings> {
       _save(state.copyWith(method: m));
   Future<void> setMadhab(Madhab m) => _save(state.copyWith(madhab: m));
   Future<void> setAdhan(bool v) => _save(state.copyWith(adhanNotifications: v));
+
+  Future<void> setOffset(String prayer, int minutes) => _save(
+    state.copyWith(offsets: {...state.offsets, prayer: minutes.clamp(-30, 30)}),
+  );
+
+  Future<void> setHijriAdjust(int days) =>
+      _save(state.copyWith(hijriAdjust: days.clamp(-2, 2)));
 
   /// يحدد الموقع الحالي. يرجّع رسالة خطأ بالعربي أو null لو نجح.
   Future<String?> detectLocation() async {

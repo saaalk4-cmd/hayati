@@ -532,4 +532,26 @@ void main() {
       expect(info.isLastTen, isFalse);
     });
   });
+
+  test('prayer minute offsets shift times', () {
+    const base = PrayerSettings(
+      latitude: 30.0444,
+      longitude: 31.2357,
+      placeLabel: 'القاهرة',
+      method: CalculationMethod.egyptian,
+      madhab: Madhab.shafi,
+      adhanNotifications: false,
+      hasRealLocation: true,
+    );
+    final shifted = base.copyWith(offsets: {'maghrib': 3, 'fajr': -2});
+    final day = DateTime(2026, 11, 23);
+    final a = computePrayerTimes(base, day);
+    final b = computePrayerTimes(shifted, day);
+    expect(
+      b[PrayerName.maghrib].difference(a[PrayerName.maghrib]).inMinutes,
+      3,
+    );
+    expect(b[PrayerName.fajr].difference(a[PrayerName.fajr]).inMinutes, -2);
+    expect(b[PrayerName.dhuhr], a[PrayerName.dhuhr]);
+  });
 }

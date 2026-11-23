@@ -16,6 +16,9 @@ String latinDigits(String s) {
 }
 
 class HayatiDates {
+  /// تعديل التاريخ الهجري بالأيام (من إعدادات المواقيت)
+  static int hijriAdjust = 0;
+
   static String greeting(DateTime now) {
     final h = now.hour;
     if (h >= 4 && h < 12) return 'صباح الخير';
@@ -27,7 +30,7 @@ class HayatiDates {
 
   static String hijri(DateTime d) {
     HijriCalendar.setLocal('ar');
-    final h = HijriCalendar.fromDate(d);
+    final h = HijriCalendar.fromDate(d.add(Duration(days: hijriAdjust)));
     return '${h.hDay} ${h.longMonthName} ${h.hYear} هـ';
   }
 
