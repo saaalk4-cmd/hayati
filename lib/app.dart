@@ -11,6 +11,7 @@ import 'features/family/occasion_reminders.dart';
 import 'features/habits/habit_reminders.dart';
 import 'features/habits/habits_repository.dart';
 import 'features/lock/lock_service.dart';
+import 'features/widget/home_widget_sync.dart';
 import 'features/money/money_models.dart';
 import 'features/money/money_repository.dart';
 import 'features/money/money_screen.dart';
@@ -35,6 +36,12 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // ويدجت الشاشة الرئيسية بيتحدث مع أي تغيير في المواقيت أو المهام أو العادات
+    ref.listenManual(
+      widgetPayloadProvider,
+      (_, next) => HomeWidgetSync.push(next),
+      fireImmediately: true,
+    );
     // ملخص الصبح: بيتحسب من البيانات الحالية ويتجدول للصبح الجاي
     ref.listenManual(_morningInputsProvider, (_, next) {
       SmartReminders.syncMorning(

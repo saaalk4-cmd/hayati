@@ -13,6 +13,7 @@ import 'package:hayati/data/session.dart';
 import 'package:hayati/data/user_store.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hayati/features/stats/stats.dart';
+import 'package:hayati/features/widget/home_widget_sync.dart';
 import 'package:hayati/features/reminders/smart_reminders.dart';
 import 'package:hayati/features/worship/prayer_log.dart';
 import 'package:hayati/features/worship/adhkar_data.dart';
@@ -479,5 +480,32 @@ void main() {
     expect(d!['page'], 13);
     expect(d['log'], {'2026-11-21': 4, '2026-11-22': 3});
     expect(deepMerge({'a': 1}, {'b': 2}), {'a': 1, 'b': 2});
+  });
+
+  test('home widget payload has 6 ordered prayer times', () {
+    const cairo = PrayerSettings(
+      latitude: 30.0444,
+      longitude: 31.2357,
+      placeLabel: 'القاهرة',
+      method: CalculationMethod.egyptian,
+      madhab: Madhab.shafi,
+      adhanNotifications: false,
+      hasRealLocation: true,
+    );
+    final p = buildWidgetPayload(
+      settings: cairo,
+      now: DateTime(2026, 11, 23, 10),
+      tasksLeft: 3,
+      habitsDone: 1,
+      habitsTotal: 4,
+    );
+    final times = p.times.split(',').map(int.parse).toList();
+    expect(times.length, 6);
+    for (var i = 1; i < times.length; i++) {
+      expect(times[i] > times[i - 1], isTrue);
+    }
+    expect(p.names.split(',').first, 'الفجر');
+    expect(p.tasksLine, contains('3'));
+    expect(p.habitsLine, 'عادات النهارده: 1/4');
   });
 }
