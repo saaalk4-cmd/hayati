@@ -9,6 +9,7 @@ import '../../core/utils/date_utils.dart';
 import '../../core/widgets/section_card.dart';
 import '../../data/session.dart';
 import '../../data/tasks_repository.dart';
+import '../review/weekly_review_screen.dart';
 import '../tasks/add_task_sheet.dart';
 import '../account/guest_migration.dart';
 import '../family/family_models.dart';
@@ -81,6 +82,16 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             const SizedBox(height: 12),
             const _GuestMigrationBanner(),
             const _PlanMyDayButton(),
+            if (isReviewTime(_now))
+              Card(
+                child: ListTile(
+                  leading: const Text('📝', style: TextStyle(fontSize: 26)),
+                  title: const Text('وقت مراجعة الأسبوع'),
+                  subtitle: const Text('شوف إنجازاتك وخطط للأسبوع الجاي'),
+                  trailing: const Icon(Icons.chevron_left),
+                  onTap: () => context.push('/review'),
+                ),
+              ),
             const SizedBox(height: 12),
             GestureDetector(
               onTap: () => context.go('/worship'),

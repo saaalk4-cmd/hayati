@@ -147,6 +147,14 @@ class SettingsScreen extends ConsumerWidget {
             onChanged: (v) =>
                 ref.read(reminderSettingsProvider.notifier).update(white: v),
           ),
+          SwitchListTile(
+            secondary: const Icon(Icons.rate_review_outlined),
+            title: const Text('تذكير المراجعة الأسبوعية'),
+            subtitle: const Text('كل جمعة الساعة 8 بالليل'),
+            value: reminders.weeklyReview,
+            onChanged: (v) =>
+                ref.read(reminderSettingsProvider.notifier).update(review: v),
+          ),
           section('بياناتي'),
           ListTile(
             leading: const Icon(Icons.download_outlined),

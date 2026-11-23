@@ -19,6 +19,7 @@ import '../../features/more/more_screen.dart';
 import '../../features/more/settings_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/ramadan/ramadan_screen.dart';
+import '../../features/review/weekly_review_screen.dart';
 import '../../features/search/global_search.dart';
 import '../../features/shell/main_shell.dart';
 import '../../features/stats/stats_screen.dart';
@@ -66,6 +67,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/focus', builder: (_, _) => const FocusScreen()),
       GoRoute(path: '/calendar', builder: (_, _) => const CalendarScreen()),
       GoRoute(path: '/goals', builder: (_, _) => const GoalsScreen()),
+      GoRoute(path: '/review', builder: (_, _) => const WeeklyReviewScreen()),
       GoRoute(path: '/search', builder: (_, _) => const GlobalSearchScreen()),
       GoRoute(
         path: '/assistant',

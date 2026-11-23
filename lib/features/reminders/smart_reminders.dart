@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -17,11 +18,15 @@ class ReminderSettings {
     this.morningHour = 7,
     this.fastingMonThu = true,
     this.fastingWhiteDays = true,
+    this.weeklyReview = true,
   });
   final bool morningSummary;
   final int morningHour;
   final bool fastingMonThu;
   final bool fastingWhiteDays;
+
+  /// تذكير المراجعة الأسبوعية كل جمعة 8 بالليل
+  final bool weeklyReview;
 }
 
 class ReminderSettingsController extends Notifier<ReminderSettings> {
@@ -33,6 +38,7 @@ class ReminderSettingsController extends Notifier<ReminderSettings> {
       morningHour: p.getInt('rem_morning_hour') ?? 7,
       fastingMonThu: p.getBool('rem_fast_monthu') ?? true,
       fastingWhiteDays: p.getBool('rem_fast_white') ?? true,
+      weeklyReview: p.getBool('rem_weekly_review') ?? true,
     );
   }
 
@@ -41,12 +47,14 @@ class ReminderSettingsController extends Notifier<ReminderSettings> {
     int? hour,
     bool? monThu,
     bool? white,
+    bool? review,
   }) async {
     final p = ref.read(sharedPrefsProvider);
     if (morning != null) await p.setBool('rem_morning', morning);
     if (hour != null) await p.setInt('rem_morning_hour', hour);
     if (monThu != null) await p.setBool('rem_fast_monthu', monThu);
     if (white != null) await p.setBool('rem_fast_white', white);
+    if (review != null) await p.setBool('rem_weekly_review', review);
     state = build();
   }
 }
@@ -133,6 +141,44 @@ List<(DateTime, String)> upcomingFastingDays(
 class SmartReminders {
   static const _morningId = 5000000;
   static const _fastBase = 5000100;
+  static const _reviewId = 5000050;
+
+  /// الجمعة الجاية الساعة 8 بالليل (أو النهارده لو لسه مجاش الميعاد)
+  static DateTime nextReviewAt(DateTime now) {
+    var at = DateTime(now.year, now.month, now.day, 20);
+    while (at.weekday != DateTime.friday || !at.isAfter(now)) {
+      at = DateTime(at.year, at.month, at.day + 1, 20);
+    }
+    return at;
+  }
+
+  static Future<void> syncWeeklyReview(ReminderSettings settings) async {
+    final n = AppNotifications.instance;
+    await n.init();
+    if (!n.ready) return;
+    await n.plugin.cancel(id: _reviewId);
+    if (!settings.weeklyReview) return;
+    try {
+      await n.plugin.zonedSchedule(
+        id: _reviewId,
+        scheduledDate: tz.TZDateTime.from(
+          nextReviewAt(DateTime.now()),
+          tz.local,
+        ),
+        notificationDetails: AppNotifications.channel(
+          'weekly_review',
+          'المراجعة الأسبوعية',
+          'تذكير كل جمعة تراجع أسبوعك',
+        ),
+        androidScheduleMode: await n.scheduleMode(),
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        title: '📝 وقت مراجعة الأسبوع',
+        body: '5 دقايق تشوف فيهم أسبوعك وتخطط للجاي',
+      );
+    } catch (e) {
+      debugPrint('weekly review reminder failed: $e');
+    }
+  }
 
   static Future<void> syncMorning({
     required ReminderSettings settings,

@@ -28,6 +28,7 @@ import 'package:hayati/features/worship/quran_progress.dart';
 import 'package:hayati/features/worship/qada.dart';
 import 'package:hayati/features/worship/islamic_occasions.dart';
 import 'package:hayati/features/goals/goals.dart';
+import 'package:hayati/features/review/weekly_review_screen.dart';
 import 'package:hayati/features/search/global_search.dart';
 import 'package:hayati/features/money/money_analytics.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -814,5 +815,24 @@ void main() {
     final s = snippet('${'كلام ' * 30}المفتاح هنا ${'تاني ' * 30}', 'المفتاح');
     expect(s, contains('المفتاح'));
     expect(s.startsWith('…'), isTrue);
+  });
+
+  test('المراجعة الأسبوعية: النص وميعاد التذكير', () {
+    final t = buildReviewText(['ذاكرت كويس', '', 'رياضة']);
+    expect(t, startsWith('📝 مراجعة الأسبوع'));
+    expect(t, contains('ذاكرت كويس'));
+    expect(t, isNot(contains(reviewQuestions[1])));
+    // الاتنين 23 نوفمبر 2026 => الجمعة 27 الساعة 8
+    expect(
+      SmartReminders.nextReviewAt(DateTime(2026, 11, 23, 10)),
+      DateTime(2026, 11, 27, 20),
+    );
+    // الجمعة بعد 8 => الجمعة اللي بعدها
+    expect(
+      SmartReminders.nextReviewAt(DateTime(2026, 11, 27, 21)),
+      DateTime(2026, 12, 4, 20),
+    );
+    expect(isReviewTime(DateTime(2026, 11, 28)), isTrue);
+    expect(isReviewTime(DateTime(2026, 11, 23)), isFalse);
   });
 }

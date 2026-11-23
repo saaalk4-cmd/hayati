@@ -69,6 +69,7 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AdhanNotifications.instance.reschedule(ref.read(prayerSettingsProvider));
       SmartReminders.syncFasting(ref.read(reminderSettingsProvider));
+      SmartReminders.syncWeeklyReview(ref.read(reminderSettingsProvider));
     });
   }
 
@@ -112,10 +113,10 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
       final v = next.value;
       if (v != null) TaskReminders.sync(v);
     });
-    ref.listen(
-      reminderSettingsProvider,
-      (_, next) => SmartReminders.syncFasting(next),
-    );
+    ref.listen(reminderSettingsProvider, (_, next) {
+      SmartReminders.syncFasting(next);
+      SmartReminders.syncWeeklyReview(next);
+    });
 
     return MaterialApp.router(
       title: 'حياتي',
