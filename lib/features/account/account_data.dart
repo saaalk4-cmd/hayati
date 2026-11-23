@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
@@ -82,9 +83,19 @@ Object? _tryDecode(String v) {
 Future<void> deleteMyAccount(WidgetRef ref) async {
   final session = ref.read(sessionProvider);
   if (session is UserSession) {
-    await FirebaseFunctions.instanceFor(region: AppConfig.functionsRegion)
-        .httpsCallable('deleteMyAccount')
-        .call<Map<String, dynamic>>();
+    try {
+      await FirebaseFunctions.instanceFor(region: AppConfig.functionsRegion)
+          .httpsCallable('deleteMyAccount')
+          .call<Map<String, dynamic>>();
+    } on FirebaseFunctionsException catch (e) {
+      // السيرفر مش مرفوع (خطة Spark المجانية): نمسح من الموبايل نفسه
+      if (e.code != 'not-found' &&
+          e.code != 'unavailable' &&
+          e.code != 'internal') {
+        rethrow;
+      }
+      await _deleteFromDevice(session.uid);
+    }
   } else {
     final prefs = ref.read(sharedPrefsProvider);
     for (final k in prefs.getKeys().where(_isLocalDataKey).toList()) {
@@ -92,4 +103,24 @@ Future<void> deleteMyAccount(WidgetRef ref) async {
     }
   }
   await ref.read(sessionProvider.notifier).signOut();
+}
+
+/// حذف البيانات والحساب من الموبايل (من غير Cloud Functions)
+Future<void> _deleteFromDevice(String uid) async {
+  final db = FirebaseFirestore.instance;
+  final user = db.collection('users').doc(uid);
+  for (final c in userCollections) {
+    while (true) {
+      final snap = await user.collection(c).limit(300).get();
+      if (snap.docs.isEmpty) break;
+      final batch = db.batch();
+      for (final d in snap.docs) {
+        batch.delete(d.reference);
+      }
+      await batch.commit();
+    }
+  }
+  await user.delete();
+  // ممكن يطلب تسجيل دخول حديث؛ الخطأ بيتعرض للمستخدم
+  await FirebaseAuth.instance.currentUser?.delete();
 }

@@ -256,11 +256,16 @@ class SettingsScreen extends ConsumerWidget {
     if (ok != true) return;
     try {
       await deleteMyAccount(ref);
-    } catch (_) {
+    } catch (e) {
       if (context.mounted) {
+        final recent = e.toString().contains('requires-recent-login');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تعذّر الحذف، اتأكد من النت وجرّب تاني'),
+          SnackBar(
+            content: Text(
+              recent
+                  ? 'بياناتك اتمسحت. عشان نمسح الحساب نفسه سجّل خروج وادخل تاني وجرّب'
+                  : 'تعذّر الحذف، اتأكد من النت وجرّب تاني',
+            ),
           ),
         );
       }
