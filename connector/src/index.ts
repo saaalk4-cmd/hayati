@@ -41,7 +41,8 @@ function html(body: string, status = 200, headers?: Headers): Response {
   const h = headers ?? new Headers();
   h.set("Content-Type", "text/html; charset=utf-8");
   h.set("X-Frame-Options", "DENY");
-  h.set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'");
+  // متحطش form-action: Chrome بيطبّقه على التحويل لـ Claude بعد الدخول وبيوقفه
+  h.set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'");
   h.set("Referrer-Policy", "no-referrer");
   return new Response(body, { status, headers: h });
 }
@@ -94,10 +95,9 @@ async function authorize(request: Request, env: Env): Promise<Response> {
       return Response.redirect(error.redirectTo, 302);
     }
     if (error instanceof AuthorizationError || error instanceof CimdFetchError) {
+      // رسايل المكتبة بالإنجليزي؛ المستخدم يشوف رسالة عربي واضحة
       const message =
-        error instanceof AuthorizationError && error.description
-          ? error.description
-          : "الصفحة دي خلصت أو مش صالحة. ارجع لـ Claude وابدأ التوصيل من جديد.";
+        "الصفحة دي اتستخدمت قبل كده أو وقتها خلص. ارجع لـ Claude ← Settings ← Connectors ودوس Connect جنب «حياتي» تاني.";
       return html(messagePage("حصلت مشكلة", message), 400);
     }
     throw error;
