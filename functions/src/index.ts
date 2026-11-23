@@ -21,7 +21,27 @@ const db = getFirestore();
 
 const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
 
-const MODEL = "claude-opus-5-5";
+/** الطلبات اللي محتاجة تفكير (تخطيط، تلخيص، تحليل، نصيحة) */
+const SMART_MODEL = "claude-opus-5-5";
+/** الأسئلة البسيطة والتسجيل السريع: أسرع وأرخص بكتير */
+const FAST_MODEL = "claude-haiku-5-5";
+
+const COMPLEX_HINTS = [
+  "رتب", "رتّب", "خطة", "خطط", "نظم", "نظّم", "لخص", "لخّص", "ملخص", "حلل", "حلّل",
+  "تحليل", "أسبوع", "اسبوع", "الشهر", "نصيحة", "انصح", "اقترح", "ساعدني", "فكر",
+  "ليه", "إزاي أ", "ازاي ا", "قارن", "أحسن طريقة", "يومية", "اكتبلي",
+];
+
+/**
+ * بيختار الموديل حسب آخر رسالة: البسيط لـ Haiku، والمحتاج تفكير لـ Opus.
+ * (مصدّرة عشان تتختبر)
+ */
+export function chooseModel(lastUserText: string): string {
+  const t = lastUserText.trim();
+  if (t.length > 140) return SMART_MODEL;
+  if (COMPLEX_HINTS.some((h) => t.includes(h))) return SMART_MODEL;
+  return FAST_MODEL;
+}
 /** Max assistant messages per user per day (keeps costs predictable). */
 const DAILY_LIMIT = 40;
 const MAX_HISTORY = 20;
@@ -927,17 +947,30 @@ export const askHayati = onCall(
     const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
 
     try {
-      const final = await client.beta.messages.toolRunner({
-        model: MODEL,
-        max_tokens: 16000,
-        output_config: { effort: "low" },
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
-        system: `${SYSTEM_PROMPT}\n\nالنهارده عند المستخدم: ${label}.${describeContext(context)}`,
-        tools: buildTools(uid, actions),
-        messages: messages.map((m) => ({ role: m.role, content: m.text })),
-        max_iterations: 8,
-      });
+      const system = `${SYSTEM_PROMPT}\n\nالنهارده عند المستخدم: ${label}.${describeContext(context)}`;
+      const history = messages.map((m) => ({ role: m.role, content: m.text }));
+      const run = (model: string) =>
+        client.beta.messages.toolRunner({
+          model,
+          max_tokens: 16000,
+          output_config: { effort: "low" },
+          // الـ fallback على السيرفر متاح لـ Opus بس (Haiku مالوش)
+          ...(model === SMART_MODEL
+            ? { betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" as const }
+            : {}),
+          system,
+          tools: buildTools(uid, actions),
+          messages: history,
+          max_iterations: 8,
+        });
+
+      const model = chooseModel(last.text);
+      let final = await run(model);
+      // لو Haiku رفض من غير ما ينفّذ حاجة، نعيد الطلب على Opus (اللي عنده fallback)
+      if (final.stop_reason === "refusal" && model === FAST_MODEL && actions.length === 0) {
+        logger.info("fast model refused; retrying on smart model");
+        final = await run(SMART_MODEL);
+      }
 
       if (final.stop_reason === "refusal") {
         return {
