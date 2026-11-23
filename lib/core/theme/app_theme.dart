@@ -130,6 +130,10 @@ class AppTheme {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: p.accent,
         foregroundColor: p.onAccent,
+        elevation: 2,
+        focusElevation: 3,
+        hoverElevation: 3,
+        highlightElevation: 4,
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(

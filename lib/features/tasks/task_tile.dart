@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/utils/date_utils.dart';
+import '../../core/widgets/motion.dart';
 import '../../data/task.dart';
 import '../../data/tasks_repository.dart';
 import 'task_detail_sheet.dart';
@@ -18,11 +19,14 @@ class TaskTile extends ConsumerWidget {
     final tile = ListTile(
       dense: dense,
       contentPadding: EdgeInsets.symmetric(horizontal: dense ? 0 : 16),
-      leading: Checkbox(
+      leading: PopOnChange(
         value: task.done,
-        shape: const CircleBorder(),
-        activeColor: scheme.primary,
-        onChanged: (_) => repo.toggle(task),
+        child: Checkbox(
+          value: task.done,
+          shape: const CircleBorder(),
+          activeColor: scheme.primary,
+          onChanged: (_) => repo.toggle(task),
+        ),
       ),
       title: Text(
         task.title,

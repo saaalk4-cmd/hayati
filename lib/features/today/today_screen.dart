@@ -26,6 +26,7 @@ import '../worship/prayer_log.dart';
 import '../worship/prayer_service.dart';
 import '../worship/worship_screen.dart';
 import '../../core/theme/palettes.dart';
+import '../../core/widgets/motion.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({super.key});
@@ -83,7 +84,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-          children: [
+          children: staggered([
             _Header(now: _now, name: name),
             const SizedBox(height: 12),
             const _GuestMigrationBanner(),
@@ -136,7 +137,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             const _UpcomingCard(),
             const SizedBox(height: 12),
             const _VerseCard(),
-          ],
+          ]),
         ),
       ),
     );
@@ -156,6 +157,14 @@ class _Header extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: context.palette.hero,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.palette.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

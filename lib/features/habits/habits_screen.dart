@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/motion.dart';
 import 'habit.dart';
 import 'habit_editor.dart';
 import 'habits_repository.dart';
@@ -52,23 +53,41 @@ class HabitCard extends ConsumerWidget {
 
     final check = InkWell(
       customBorder: const CircleBorder(),
-      onTap: () {
+      onTap: () async {
         HapticFeedback.lightImpact();
-        ref.read(habitsRepositoryProvider).setDone(habit, today, !doneToday);
+        await ref
+            .read(habitsRepositoryProvider)
+            .setDone(habit, today, !doneToday);
+        // لو دي كانت آخر عادة النهارده: احتفال 🎉
+        if (!doneToday && context.mounted) {
+          final all = (ref.read(habitsProvider).value ?? const []).where(
+            (h) => h.isScheduled(today),
+          );
+          final rest = all.where((h) => h.id != habit.id && !h.isDoneOn(today));
+          if (rest.isEmpty) {
+            HapticFeedback.heavyImpact();
+            showCelebration(context);
+          }
+        }
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: 44,
-        height: 44,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: doneToday ? scheme.primary : Colors.transparent,
-          border: Border.all(
-            color: doneToday ? scheme.primary : scheme.outline,
-            width: 2,
+      child: PopOnChange(
+        value: doneToday,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: doneToday ? scheme.primary : Colors.transparent,
+            border: Border.all(
+              color: doneToday ? scheme.primary : scheme.outline,
+              width: 2,
+            ),
           ),
+          child: doneToday
+              ? const Icon(Icons.check, color: Colors.white)
+              : null,
         ),
-        child: doneToday ? const Icon(Icons.check, color: Colors.white) : null,
       ),
     );
 

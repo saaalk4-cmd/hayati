@@ -12,6 +12,7 @@ import 'prayer_settings.dart';
 import 'quran_progress.dart';
 import 'tasbeeh_screen.dart';
 import '../../core/theme/palettes.dart';
+import '../../core/widgets/motion.dart';
 
 class WorshipScreen extends ConsumerWidget {
   const WorshipScreen({super.key});
@@ -35,7 +36,7 @@ class WorshipScreen extends ConsumerWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-        children: [
+        children: staggered([
           const NextPrayerHero(),
           if (!settings.hasRealLocation) ...[
             const SizedBox(height: 12),
@@ -147,7 +148,7 @@ class WorshipScreen extends ConsumerWidget {
                     ],
                   ),
           ),
-        ],
+        ]),
       ),
     );
   }
@@ -200,6 +201,14 @@ class NextPrayerHero extends ConsumerWidget {
       decoration: BoxDecoration(
         gradient: context.palette.hero,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.palette.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Row(
         children: [

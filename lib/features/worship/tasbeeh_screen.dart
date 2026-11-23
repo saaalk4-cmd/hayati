@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_utils.dart';
+import '../../core/widgets/motion.dart';
 import '../../data/user_store.dart';
 import '../../core/theme/palettes.dart';
 
@@ -46,6 +47,7 @@ class _TasbeehScreenState extends ConsumerState<TasbeehScreen> {
     });
     if (_count == _target) {
       HapticFeedback.heavyImpact();
+      showCelebration(context);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('أتممت $_target ✓ تقبّل الله')));
     }

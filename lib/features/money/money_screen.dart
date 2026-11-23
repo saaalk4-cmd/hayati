@@ -226,6 +226,14 @@ class _SummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: context.palette.hero,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: context.palette.cardBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

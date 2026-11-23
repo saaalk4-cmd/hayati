@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/motion.dart';
 import 'quran_progress.dart';
 import '../../core/theme/palettes.dart';
 
@@ -163,6 +164,7 @@ class QuranScreen extends ConsumerWidget {
   }
 
   void _celebrate(BuildContext context) {
+    showCelebration(context);
     showDialog<void>(
       context: context,
       builder: (c) => AlertDialog(
