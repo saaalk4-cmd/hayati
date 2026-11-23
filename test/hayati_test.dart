@@ -8,6 +8,8 @@ import 'package:hayati/features/habits/habit.dart';
 import 'package:hayati/features/journal/journal_repository.dart';
 import 'package:hayati/features/lock/pin_pad.dart';
 import 'package:hayati/features/money/money_models.dart';
+import 'package:hayati/features/money/money_repository.dart';
+import 'package:hayati/features/money/money_screen.dart';
 import 'package:hayati/features/onboarding/onboarding_screen.dart';
 import 'package:hayati/data/session.dart';
 import 'package:hayati/data/user_store.dart';
@@ -595,5 +597,54 @@ void main() {
     expect(list.first.title, 'مهمة جدًا');
     await repo.update(list.first.copyWith(subtasks: const [Subtask('s')]));
     expect((await repo.watch().first).first.subtasks.length, 1);
+  });
+
+  test('recurring expenses apply once per month', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final store = LocalUserStore(prefs);
+    final repo = LocalTransactionsRepository(prefs);
+    const rent = RecurringExpense(
+      id: 'r1',
+      title: 'الإيجار',
+      amount: 3000,
+      category: 'home',
+      dayOfMonth: 5,
+    );
+    var settings = const MoneySettings(recurring: [rent]);
+    // قبل المعاد: مفيش حاجة
+    expect(dueRecurring(settings, DateTime(2026, 11, 3)), isEmpty);
+    // بعد المعاد: يتسجل مرة واحدة
+    final now = DateTime(2026, 11, 23);
+    expect(await applyRecurring(store, repo, settings, now), 1);
+    final saved = await store.get('money', 'settings');
+    settings = MoneySettings(
+      recurring: const [rent],
+      recurringApplied: (saved!['recurringApplied'] as Map)
+          .cast<String, String>(),
+    );
+    expect(await applyRecurring(store, repo, settings, now), 0);
+    final txs = await repo.watchMonth('2026-11').first;
+    expect(txs.length, 1);
+    expect(txs.first.amount, 3000);
+    expect(txs.first.date, '2026-11-05');
+  });
+
+  test('transactions CSV', () {
+    final csv = transactionsToCsv([
+      Transaction(
+        id: '1',
+        type: TxType.expense,
+        amount: 50,
+        category: 'food',
+        date: '2026-11-23',
+        note: 'غدا, مع الشغل',
+        createdAt: DateTime(2026),
+      ),
+    ]);
+    final lines = csv.split('\n');
+    expect(lines.first, startsWith('التاريخ'));
+    expect(lines[1], contains('"غدا, مع الشغل"'));
+    expect(lines[1], contains('أكل'));
   });
 }

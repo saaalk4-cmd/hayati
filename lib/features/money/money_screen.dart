@@ -2,6 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:uuid/uuid.dart';
+import 'package:share_plus/share_plus.dart';
+
+import 'dart:convert';
+import 'dart:typed_data';
 
 import '../../core/theme/app_colors.dart';
 import 'add_transaction_sheet.dart';
@@ -33,6 +37,14 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
       appBar: AppBar(
         title: const Text('فلوسي'),
         actions: [
+          IconButton(
+            tooltip: 'تصدير الشهر (CSV)',
+            onPressed: () => _exportCsv(
+              ref.read(monthTransactionsProvider(key)).value ?? const [],
+              key,
+            ),
+            icon: const Icon(Icons.file_download_outlined),
+          ),
           IconButton(
             tooltip: 'الميزانية',
             onPressed: () => _editBudget(context, settings.monthlyBudget),
@@ -78,12 +90,27 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
                   ),
                 ],
               ),
-              _SummaryCard(summary: s, budget: settings.monthlyBudget),
+              _SummaryCard(
+                summary: s,
+                budget: settings.monthlyBudget,
+                previousSpent: MonthSummary(
+                  ref
+                          .watch(
+                            monthTransactionsProvider(
+                              monthKey(DateTime(_month.year, _month.month - 1)),
+                            ),
+                          )
+                          .value ??
+                      const [],
+                ).spent,
+              ),
               const SizedBox(height: 12),
               if (s.byCategory().isNotEmpty) ...[
                 _CategoryBreakdown(summary: s),
                 const SizedBox(height: 12),
               ],
+              _RecurringCard(settings: settings),
+              const SizedBox(height: 12),
               _GoalsCard(goals: settings.goals),
               const SizedBox(height: 16),
               if (list.isEmpty)
@@ -127,6 +154,18 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
     return out;
   }
 
+  Future<void> _exportCsv(List<Transaction> list, String month) async {
+    final csv = transactionsToCsv(list);
+    // BOM عشان Excel يقرا العربي صح
+    final bytes = Uint8List.fromList([0xEF, 0xBB, 0xBF, ...utf8.encode(csv)]);
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile.fromData(bytes, mimeType: 'text/csv')],
+        fileNameOverrides: ['hayati-$month.csv'],
+      ),
+    );
+  }
+
   Future<void> _editBudget(BuildContext context, double? current) async {
     final c = TextEditingController(
       text: current == null ? '' : current.toStringAsFixed(0),
@@ -166,9 +205,14 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
 }
 
 class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.summary, required this.budget});
+  const _SummaryCard({
+    required this.summary,
+    required this.budget,
+    required this.previousSpent,
+  });
   final MonthSummary summary;
   final double? budget;
+  final double previousSpent;
 
   @override
   Widget build(BuildContext context) {
@@ -238,9 +282,24 @@ class _SummaryCard extends StatelessWidget {
               ),
             ],
           ),
+          if (previousSpent > 0) ...[
+            const SizedBox(height: 6),
+            Text(
+              _compare(summary.spent, previousSpent),
+              style: text.bodySmall?.copyWith(color: Colors.white70),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  String _compare(double now, double prev) {
+    final pct = ((now - prev) / prev * 100).round();
+    if (pct == 0) return 'زي الشهر اللي فات بالظبط';
+    return pct > 0
+        ? '⬆ أكتر من الشهر اللي فات بـ $pct%'
+        : '⬇ أقل من الشهر اللي فات بـ ${-pct}% 👏';
   }
 }
 
@@ -491,5 +550,174 @@ class _TxTile extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// تحويل حركات الشهر لـ CSV (التاريخ، النوع، التصنيف، المبلغ، الملاحظة)
+String transactionsToCsv(List<Transaction> list) {
+  String esc(String v) =>
+      v.contains(RegExp('[",\n]')) ? '"${v.replaceAll('"', '""')}"' : v;
+  final rows = <String>['التاريخ,النوع,التصنيف,المبلغ,ملاحظة'];
+  for (final t in list) {
+    rows.add(
+      [
+        t.date,
+        t.type == TxType.expense ? 'مصروف' : 'دخل',
+        categoryById(t.category).name,
+        t.amount.toStringAsFixed(2),
+        esc(t.note ?? ''),
+      ].join(','),
+    );
+  }
+  return rows.join('\n');
+}
+
+/// المصروفات الثابتة الشهرية
+class _RecurringCard extends ConsumerWidget {
+  const _RecurringCard({required this.settings});
+  final MoneySettings settings;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final list = settings.recurring;
+    final total = list.fold<double>(0, (s, r) => s + r.amount);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'مصروفات ثابتة كل شهر',
+                    style: Theme.of(context).textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => _add(context, ref),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('إضافة'),
+                ),
+              ],
+            ),
+            if (list.isEmpty)
+              const Text(
+                'إيجار، فواتير، اشتراكات... بتتسجل لوحدها في معادها 🔁',
+              )
+            else ...[
+              for (final r in list)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    categoryById(r.category).icon,
+                    color: categoryById(r.category).color,
+                  ),
+                  title: Text(r.title),
+                  subtitle: Text('يوم ${r.dayOfMonth} من كل شهر'),
+                  trailing: Text(
+                    formatMoney(r.amount),
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  onLongPress: () => saveRecurring(
+                    ref,
+                    list.where((x) => x.id != r.id).toList(),
+                  ),
+                ),
+              Text(
+                'المجموع: ${formatMoney(total)} في الشهر',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _add(BuildContext context, WidgetRef ref) async {
+    final title = TextEditingController();
+    final amount = TextEditingController();
+    var category = 'bills';
+    var day = 1;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => StatefulBuilder(
+        builder: (d, setState) => AlertDialog(
+          title: const Text('مصروف ثابت جديد'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: title,
+                  decoration: const InputDecoration(
+                    labelText: 'الاسم (إيجار، نت...)',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: amount,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'المبلغ',
+                    suffixText: 'ج.م',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: category,
+                  decoration: const InputDecoration(labelText: 'التصنيف'),
+                  items: [
+                    for (final c in expenseCategories)
+                      DropdownMenuItem(value: c.id, child: Text(c.name)),
+                  ],
+                  onChanged: (v) => category = v ?? 'bills',
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<int>(
+                  initialValue: day,
+                  decoration: const InputDecoration(
+                    labelText: 'يوم كام في الشهر',
+                  ),
+                  items: [
+                    for (var i = 1; i <= 28; i++)
+                      DropdownMenuItem(value: i, child: Text('$i')),
+                  ],
+                  onChanged: (v) => day = v ?? 1,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(d, false),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(d, true),
+              child: const Text('حفظ'),
+            ),
+          ],
+        ),
+      ),
+    );
+    final a = double.tryParse(amount.text);
+    if (ok == true && title.text.trim().isNotEmpty && a != null && a > 0) {
+      await saveRecurring(ref, [
+        ...settings.recurring,
+        RecurringExpense(
+          id: const Uuid().v4(),
+          title: title.text.trim(),
+          amount: a,
+          category: category,
+          dayOfMonth: day,
+        ),
+      ]);
+    }
+    title.dispose();
+    amount.dispose();
   }
 }

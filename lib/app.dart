@@ -18,6 +18,7 @@ import 'features/money/money_screen.dart';
 import 'features/reminders/smart_reminders.dart';
 import 'features/tasks/task_reminders.dart';
 import 'data/task.dart';
+import 'data/user_store.dart';
 import 'data/tasks_repository.dart';
 import 'features/habits/habit.dart';
 import 'features/worship/adhan_notifications.dart';
@@ -36,6 +37,17 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // المصروفات الثابتة: تتسجل لوحدها لما معادها ييجي
+    ref.listenManual(moneySettingsProvider, (_, next) {
+      final v = next.value;
+      if (v == null) return;
+      applyRecurring(
+        ref.read(userStoreProvider),
+        ref.read(transactionsRepositoryProvider),
+        v,
+        DateTime.now(),
+      );
+    }, fireImmediately: true);
     // ويدجت الشاشة الرئيسية بيتحدث مع أي تغيير في المواقيت أو المهام أو العادات
     ref.listenManual(
       widgetPayloadProvider,
