@@ -1,0 +1,16 @@
+{
+  // سيرفر توصيل Claude بحياتي
+  "name": "hayati",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "workers_dev": true,
+  "kv_namespaces": [{ "binding": "OAUTH_KV", "id": "e6057a05746447119b757a925533e077" }],
+  "vars": {
+    "PUBLIC_URL": "https://hayati.saaalk4.workers.dev",
+    "FIREBASE_PROJECT_ID": "hayati-69b0a"
+  },
+  // FIREBASE_API_KEY بيتحط كـ secret (wrangler secret put) مش في الكود
+  "alias": { "zod": "./node_modules/zod" },
+  "observability": { "enabled": true }
+}
