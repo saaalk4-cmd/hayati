@@ -69,6 +69,11 @@ service cloud.firestore {
         allow read, write: if isOwner(uid);
       }
 
+      // سلة المحذوفات (من Claude، بتتمسح بعد 30 يوم): users/{uid}/trash/{id}
+      match /trash/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+
       // أهدافي: users/{uid}/goals/state
       match /goals/{docId} {
         allow read, write: if isOwner(uid);

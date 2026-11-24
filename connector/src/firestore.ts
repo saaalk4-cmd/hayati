@@ -208,6 +208,14 @@ class RestDoc implements DocRefLike {
     return this.db.json("PATCH", `${this.url}?${mask.join("&")}`, { fields: encodeFields(stripDeletes(data)) });
   }
 
+  async delete(): Promise<unknown> {
+    const res = await this.db.request("DELETE", this.url);
+    if (!res.ok && res.status !== 404) {
+      throw new Error(`firestore DELETE ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    }
+    return null;
+  }
+
   async update(data: DocData): Promise<unknown> {
     const { fields, paths } = expandDotted(data);
     const mask = paths.map((p) => `updateMask.fieldPaths=${encodeURIComponent(p.map(quoteSegment).join("."))}`);

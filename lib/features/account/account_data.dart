@@ -25,6 +25,7 @@ const userCollections = [
   'assistant',
   'qada',
   'goals',
+  'trash',
   'focus',
 ];
 

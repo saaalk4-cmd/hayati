@@ -12,7 +12,9 @@ export const INSTRUCTIONS = `These tools read and write the signed-in user's dat
 - Reply in Egyptian colloquial Arabic, short and warm.
 - To plan or review the user's day, call get_day_overview first.
 - Never invent Quran verses or hadith; cite surah:ayah when quoting, or don't quote.
-- Nothing here deletes data. If the user asks to delete something, tell them to do it from the app.`;
+- Editing: use the update_* tools; pass null for fields that stay the same.
+- Deleting is two steps and always needs the user's explicit yes: call prepare_delete, show the user exactly what will be deleted, wait for their reply, and only if they clearly agree call confirm_delete with the code. Never call confirm_delete in the same turn as prepare_delete.
+- Deleted items stay in the trash for 30 days: list_trash and restore_deleted bring them back.`;
 
 const READ_ONLY = new Set([
   "list_tasks",
@@ -25,7 +27,12 @@ const READ_ONLY = new Set([
   "get_day_overview",
   "get_week_summary",
   "get_focus_stats",
+  "list_transactions",
+  "list_trash",
+  "prepare_delete",
 ]);
+
+const DESTRUCTIVE = new Set(["confirm_delete"]);
 
 type Json = Record<string, unknown>;
 interface RpcRequest {
@@ -48,7 +55,7 @@ export function toolList(tools: ToolDef[]) {
     inputSchema: z.toJSONSchema(t.inputSchema, { io: "input", target: "draft-2020-12" }),
     annotations: {
       readOnlyHint: READ_ONLY.has(t.name),
-      destructiveHint: false,
+      destructiveHint: DESTRUCTIVE.has(t.name),
       openWorldHint: false,
     },
   }));

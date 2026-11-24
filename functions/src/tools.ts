@@ -42,6 +42,7 @@ export interface DocRefLike {
   get(): Promise<DocSnap>;
   set(data: DocData, opts?: { merge?: boolean }): Promise<unknown>;
   update(data: DocData): Promise<unknown>;
+  delete(): Promise<unknown>;
   collection(name: string): CollRefLike;
 }
 export interface TxLike {
@@ -436,9 +437,9 @@ export function buildTools<T>(deps: ToolDeps<T>, uid: string, actions: string[])
       ]);
       let spent = 0, income = 0;
       const byCat: Record<string, number> = {};
-      const list = snap.docs.map((d) => d.data() as {
+      const list = snap.docs.map((d) => ({ id: d.id, ...(d.data() as {
         type: string; amount: number; category: string; date: string; note: string | null;
-      });
+      }) }));
       for (const t of list) {
         if (t.type === "income") income += t.amount;
         else {
@@ -545,7 +546,7 @@ export function buildTools<T>(deps: ToolDeps<T>, uid: string, actions: string[])
         return Math.round((next.getTime() - t.getTime()) / 86_400_000);
       };
       return JSON.stringify({
-        occasions: occ.map((o) => ({ title: o.title, type: o.type, date: `${o.month}/${o.day}`, days_until: daysUntil(o.month, o.day) }))
+        occasions: occ.map((o) => ({ id: o.id, title: o.title, type: o.type, date: `${o.month}/${o.day}`, days_until: daysUntil(o.month, o.day) }))
           .sort((a, b) => a.days_until - b.days_until),
         people: people.map((p) => ({
           id: p.id, name: p.name, relation: p.relation, every_days: p.everyDays,
@@ -858,7 +859,374 @@ export function buildTools<T>(deps: ToolDeps<T>, uid: string, actions: string[])
     },
   });
 
+  // ───────────── التعديل ─────────────
+  const keep = <V,>(v: V | null | undefined) => v !== null && v !== undefined;
+  const pick = (o: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(o).filter(([, v]) => keep(v)));
+
+  const updateTask = betaZodTool({
+    name: "update_task",
+    description:
+      "Edit a task's fields (get its id from list_tasks). Pass null for anything to keep as is. To clear the due date pass clear_due_date=true.",
+    inputSchema: z.object({
+      task_id: z.string().min(1).max(100),
+      title: z.string().min(1).max(200).nullable(),
+      due_date: dayKey.nullable(),
+      clear_due_date: z.boolean().describe("true removes the due date"),
+      notes: z.string().max(500).nullable(),
+      list: z.enum(["عام", "شغل", "بيت", "مشتريات", "دراسة"]).nullable(),
+      priority: z.enum(["low", "normal", "high"]).nullable(),
+      repeat: z.enum(["none", "daily", "weekly", "monthly"]).nullable(),
+    }),
+    run: async ({ task_id, title, due_date, clear_due_date, notes, list, priority, repeat }) => {
+      const ref = tasks.doc(task_id);
+      const snap = await ref.get();
+      if (!snap.exists) return JSON.stringify({ ok: false, error: "not_found" });
+      const changes: Record<string, unknown> = pick({ title, dueDate: due_date, notes, list, priority, repeat });
+      if (clear_due_date) {
+        changes.dueDate = null;
+        changes.repeat = "none";
+      }
+      if (!Object.keys(changes).length) return JSON.stringify({ ok: false, error: "nothing_to_change" });
+      await ref.update(changes);
+      actions.push(`عدّلت المهمة: ${title ?? (snap.data() as TaskDoc).title}`);
+      return JSON.stringify({ ok: true, changed: Object.keys(changes) });
+    },
+  });
+
+  const updateHabit = betaZodTool({
+    name: "update_habit",
+    description: "Edit a habit (id from list_habits). Pass null to keep a field; clear_reminder=true removes its reminder.",
+    inputSchema: z.object({
+      habit_id: z.string().min(1).max(100),
+      title: z.string().min(1).max(120).nullable(),
+      emoji: z.string().max(8).nullable(),
+      weekdays: z.array(z.number().int().min(1).max(7)).min(1).max(7).nullable(),
+      reminder: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
+      clear_reminder: z.boolean(),
+    }),
+    run: async ({ habit_id, title, emoji, weekdays, reminder, clear_reminder }) => {
+      const ref = habits.doc(habit_id);
+      const snap = await ref.get();
+      if (!snap.exists) return JSON.stringify({ ok: false, error: "not_found" });
+      const changes: Record<string, unknown> = pick({
+        title, emoji, reminder,
+        weekdays: weekdays ? [...new Set(weekdays)].sort() : null,
+      });
+      if (clear_reminder) changes.reminder = null;
+      if (!Object.keys(changes).length) return JSON.stringify({ ok: false, error: "nothing_to_change" });
+      await ref.update(changes);
+      actions.push(`عدّلت العادة: ${title ?? (snap.data() as HabitDoc).title}`);
+      return JSON.stringify({ ok: true, changed: Object.keys(changes) });
+    },
+  });
+
+  const listTransactions = betaZodTool({
+    name: "list_transactions",
+    description: "List a month's transactions with their ids (newest first), to find one to edit or delete.",
+    inputSchema: z.object({ month: monthKey.describe("YYYY-MM") }),
+    run: async ({ month }) => {
+      const snap = await transactions.where("month", "==", month).get();
+      const list = snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as { type: string; amount: number; category: string; date: string; note: string | null }) }))
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .slice(0, 100)
+        .map((t) => ({ id: t.id, type: t.type, amount: t.amount, category: catAr[t.category] ?? t.category, date: t.date, note: t.note }));
+      return JSON.stringify({ count: list.length, transactions: list });
+    },
+  });
+
+  const updateTransaction = betaZodTool({
+    name: "update_transaction",
+    description: "Fix a recorded expense/income (id from list_transactions or get_money_summary). Pass null to keep a field.",
+    inputSchema: z.object({
+      transaction_id: z.string().min(1).max(100),
+      amount: z.number().positive().max(100_000_000).nullable(),
+      category: z.enum([...expenseCats, ...incomeCats]).nullable(),
+      date: dayKey.nullable(),
+      note: z.string().max(200).nullable(),
+    }),
+    run: async ({ transaction_id, amount, category, date, note }) => {
+      const ref = transactions.doc(transaction_id);
+      const snap = await ref.get();
+      if (!snap.exists) return JSON.stringify({ ok: false, error: "not_found" });
+      const cur = snap.data() as { type: string };
+      if (category) {
+        const isIncomeCat = (incomeCats as readonly string[]).includes(category);
+        if (isIncomeCat !== (cur.type === "income")) {
+          return JSON.stringify({ ok: false, error: "category_does_not_match_type" });
+        }
+      }
+      const changes: Record<string, unknown> = pick({ amount, category, date, note, month: date ? date.slice(0, 7) : null });
+      if (!Object.keys(changes).length) return JSON.stringify({ ok: false, error: "nothing_to_change" });
+      await ref.update(changes);
+      actions.push(`عدّلت ${cur.type === "income" ? "الدخل" : "المصروف"}${amount ? `: ${amount} ج.م` : ""}`);
+      return JSON.stringify({ ok: true, changed: Object.keys(changes) });
+    },
+  });
+
+  const updateGoal = betaZodTool({
+    name: "update_goal",
+    description:
+      "Edit a goal (id from goals list): title, emoji, deadline, or replace its steps (steps with the same title keep their done state). Pass null to keep a field.",
+    inputSchema: z.object({
+      goal_id: z.string().min(1).max(64),
+      title: z.string().min(1).max(120).nullable(),
+      emoji: z.string().max(8).nullable(),
+      deadline: dayKey.nullable(),
+      clear_deadline: z.boolean(),
+      steps: z.array(z.string().min(1).max(120)).max(20).nullable(),
+    }),
+    run: async ({ goal_id, title, emoji, deadline, clear_deadline, steps }) => {
+      let name = "";
+      const found = await db.runTransaction(async (tx) => {
+        const list = [...(((await tx.get(goalsRef)).data()?.list ?? []) as GoalDoc[])];
+        const g = list.find((x) => x.id === goal_id);
+        if (!g) return false;
+        if (title) g.title = title;
+        if (emoji) g.emoji = emoji;
+        if (deadline) g.deadline = deadline;
+        if (clear_deadline) delete g.deadline;
+        if (steps) {
+          const done = new Map((g.steps ?? []).map((s) => [s.t, s.d]));
+          g.steps = steps.map((t) => ({ t, d: done.get(t) ?? false }));
+        }
+        name = g.title;
+        tx.set(goalsRef, { list }, { merge: true });
+        return true;
+      });
+      if (!found) return JSON.stringify({ ok: false, error: "not_found" });
+      actions.push(`عدّلت الهدف: ${name}`);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
+  const updateOccasion = betaZodTool({
+    name: "update_occasion",
+    description: "Edit a yearly occasion (id from list_occasions_and_people). Pass null to keep a field.",
+    inputSchema: z.object({
+      occasion_id: z.string().min(1).max(100),
+      title: z.string().min(1).max(120).nullable(),
+      type: z.enum(["birthday", "anniversary", "other"]).nullable(),
+      month: z.number().int().min(1).max(12).nullable(),
+      day: z.number().int().min(1).max(31).nullable(),
+      year: z.number().int().min(1900).max(2100).nullable(),
+      remind_days_before: z.number().int().min(0).max(30).nullable(),
+    }),
+    run: async ({ occasion_id, title, type, month, day, year, remind_days_before }) => {
+      const items = await readItems<OccasionDoc>("occasions");
+      const o = items.find((x) => x.id === occasion_id);
+      if (!o) return JSON.stringify({ ok: false, error: "not_found" });
+      Object.assign(o, pick({ title, type, month, day, year, remindDaysBefore: remind_days_before }));
+      await familyCol.doc("occasions").set({ items }, { merge: true });
+      actions.push(`عدّلت المناسبة: ${o.title}`);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
+  const updatePerson = betaZodTool({
+    name: "update_person",
+    description: "Edit someone in the keep-in-touch list (id from list_occasions_and_people). Pass null to keep a field.",
+    inputSchema: z.object({
+      person_id: z.string().min(1).max(100),
+      name: z.string().min(1).max(80).nullable(),
+      relation: z.string().max(40).nullable(),
+      every_days: z.number().int().min(1).max(365).nullable(),
+    }),
+    run: async ({ person_id, name, relation, every_days }) => {
+      const items = await readItems<PersonDoc>("people");
+      const p = items.find((x) => x.id === person_id);
+      if (!p) return JSON.stringify({ ok: false, error: "not_found" });
+      Object.assign(p, pick({ name, relation, everyDays: every_days }));
+      await familyCol.doc("people").set({ items }, { merge: true });
+      actions.push(`عدّلت بيانات ${p.name}`);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
+  const updateJournal = betaZodTool({
+    name: "update_journal",
+    description:
+      "Rewrite a journal day's mood, text or gratitude (replaces, unlike write_journal which appends). Read it with get_journal first. Pass null to keep a field.",
+    inputSchema: z.object({
+      day: dayKey,
+      mood: z.number().int().min(1).max(5).nullable(),
+      text: z.string().max(8000).nullable(),
+      gratitude: z.string().max(1000).nullable(),
+    }),
+    run: async ({ day, mood, text, gratitude }) => {
+      const ref = journal.doc(day);
+      const snap = await ref.get();
+      if (!snap.exists) return JSON.stringify({ ok: false, error: "not_found" });
+      const changes = pick({ mood, text, gratitude });
+      if (!Object.keys(changes).length) return JSON.stringify({ ok: false, error: "nothing_to_change" });
+      await ref.update({ ...changes, updatedAt: Date.now() });
+      actions.push(`عدّلت يومية ${day}`);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
+  // ───────────── المسح (على خطوتين) وسلة المحذوفات ─────────────
+  const TRASH_DAYS = 30;
+  const trash = userDoc.collection("trash");
+  const pendingRef = userDoc.collection("assistant").doc("pending_delete");
+  const kinds = ["task", "habit", "transaction", "journal", "goal", "occasion", "person"] as const;
+  type Kind = (typeof kinds)[number];
+  const kindAr: Record<Kind, string> = {
+    task: "مهمة", habit: "عادة", transaction: "عملية فلوس", journal: "يومية",
+    goal: "هدف", occasion: "مناسبة", person: "شخص",
+  };
+  const docCol: Partial<Record<Kind, CollRefLike>> = { task: tasks, habit: habits, transaction: transactions, journal };
+  const listDoc: Partial<Record<Kind, { ref: DocRefLike; field: string }>> = {
+    goal: { ref: goalsRef, field: "list" },
+    occasion: { ref: familyCol.doc("occasions"), field: "items" },
+    person: { ref: familyCol.doc("people"), field: "items" },
+  };
+
+  /** بيرجّع العنصر نفسه (للعرض وللسلة) أو null */
+  async function findItem(kind: Kind, id: string): Promise<DocData | null> {
+    const col = docCol[kind];
+    if (col) {
+      const snap = await col.doc(id).get();
+      return snap.exists ? (snap.data() ?? {}) : null;
+    }
+    const { ref, field } = listDoc[kind]!;
+    const items = ((await ref.get()).data()?.[field] ?? []) as DocData[];
+    return items.find((x) => x.id === id) ?? null;
+  }
+
+  function describeItem(kind: Kind, d: DocData): string {
+    switch (kind) {
+      case "task": return `${d.title}${d.dueDate ? ` (${d.dueDate})` : ""}`;
+      case "habit": return `${d.emoji ?? ""} ${d.title}`.trim();
+      case "transaction": return `${d.type === "income" ? "دخل" : "مصروف"} ${d.amount} ج.م • ${catAr[d.category] ?? d.category} • ${d.date}${d.note ? ` • ${d.note}` : ""}`;
+      case "journal": return `يومية ${d.day}: ${String(d.text ?? "").slice(0, 80)}`;
+      case "goal": return `${d.emoji ?? "🎯"} ${d.title}`;
+      case "occasion": return `${d.title} (${d.day}/${d.month})`;
+      case "person": return `${d.name}${d.relation ? ` (${d.relation})` : ""}`;
+    }
+  }
+
+  async function purgeOldTrash(): Promise<void> {
+    const cutoff = Date.now() - TRASH_DAYS * 86_400_000;
+    const old = await trash.where("deletedAt", "<", cutoff).limit(50).get();
+    await Promise.all(old.docs.map((d) => trash.doc(d.id).delete()));
+  }
+
+  const prepareDelete = betaZodTool({
+    name: "prepare_delete",
+    description:
+      "Step 1 of deleting: returns exactly what would be deleted and a one-time confirmation code. Show the user the item and ask them to confirm. Do NOT call confirm_delete until the user explicitly says yes in their own reply. Deleted items go to a trash for 30 days and can be restored.",
+    inputSchema: z.object({
+      kind: z.enum(kinds),
+      id: z.string().min(1).max(100).describe("Item id (for journal: the day YYYY-MM-DD)"),
+    }),
+    run: async ({ kind, id }) => {
+      const item = await findItem(kind, id);
+      if (!item) return JSON.stringify({ ok: false, error: "not_found" });
+      const code = Math.random().toString(36).slice(2, 8);
+      await pendingRef.set({ code, kind, id, expiresAt: Date.now() + 10 * 60_000 });
+      return JSON.stringify({
+        ok: true,
+        will_delete: `${kindAr[kind]}: ${describeItem(kind, item)}`,
+        confirmation_code: code,
+        next: "Ask the user to confirm. Only after they say yes, call confirm_delete with this code (valid 10 minutes).",
+      });
+    },
+  });
+
+  const confirmDelete = betaZodTool({
+    name: "confirm_delete",
+    description:
+      "Step 2 of deleting: only after the user explicitly confirmed in chat. Moves the item prepared by prepare_delete to the trash (restorable for 30 days).",
+    inputSchema: z.object({ confirmation_code: z.string().min(4).max(12) }),
+    run: async ({ confirmation_code }) => {
+      const p = (await pendingRef.get()).data();
+      if (!p || p.code !== confirmation_code || (p.expiresAt as number) < Date.now()) {
+        return JSON.stringify({ ok: false, error: "invalid_or_expired_code", hint: "call prepare_delete again" });
+      }
+      const kind = p.kind as Kind;
+      const id = p.id as string;
+      const item = await findItem(kind, id);
+      if (!item) return JSON.stringify({ ok: false, error: "not_found" });
+      await trash.add({ kind, itemId: id, data: item, label: describeItem(kind, item), deletedAt: Date.now() });
+      const col = docCol[kind];
+      if (col) {
+        await col.doc(id).delete();
+      } else {
+        const { ref, field } = listDoc[kind]!;
+        await db.runTransaction(async (tx) => {
+          const items = ((await tx.get(ref)).data()?.[field] ?? []) as DocData[];
+          tx.set(ref, { [field]: items.filter((x) => x.id !== id) }, { merge: true });
+        });
+      }
+      await pendingRef.set({ code: null, expiresAt: 0 });
+      await purgeOldTrash();
+      actions.push(`مسحت ${kindAr[kind]}: ${describeItem(kind, item)} (في السلة 30 يوم)`);
+      return JSON.stringify({ ok: true, in_trash_days: TRASH_DAYS });
+    },
+  });
+
+  const listTrash = betaZodTool({
+    name: "list_trash",
+    description: "List deleted items still in the trash (last 30 days), newest first, with ids for restore_deleted.",
+    inputSchema: z.object({}),
+    run: async () => {
+      await purgeOldTrash();
+      const snap = await trash.orderBy("deletedAt", "desc").limit(50).get();
+      return JSON.stringify({
+        items: snap.docs.map((d) => {
+          const t = d.data();
+          return {
+            id: d.id,
+            what: `${kindAr[t.kind as Kind] ?? t.kind}: ${t.label}`,
+            deleted_at: new Date(t.deletedAt as number).toISOString().slice(0, 10),
+          };
+        }),
+      });
+    },
+  });
+
+  const restoreDeleted = betaZodTool({
+    name: "restore_deleted",
+    description: "Put an item from the trash back where it was (id from list_trash).",
+    inputSchema: z.object({ trash_id: z.string().min(1).max(100) }),
+    run: async ({ trash_id }) => {
+      const ref = trash.doc(trash_id);
+      const snap = await ref.get();
+      if (!snap.exists) return JSON.stringify({ ok: false, error: "not_found" });
+      const t = snap.data()!;
+      const kind = t.kind as Kind;
+      const col = docCol[kind];
+      if (col) {
+        await col.doc(t.itemId as string).set(t.data as DocData);
+      } else {
+        const { ref: listRef, field } = listDoc[kind]!;
+        await db.runTransaction(async (tx) => {
+          const items = ((await tx.get(listRef)).data()?.[field] ?? []) as DocData[];
+          if (!items.some((x) => x.id === t.itemId)) items.push(t.data as DocData);
+          tx.set(listRef, { [field]: items }, { merge: true });
+        });
+      }
+      await ref.delete();
+      actions.push(`رجّعت ${kindAr[kind]}: ${t.label}`);
+      return JSON.stringify({ ok: true });
+    },
+  });
+
   return [
+    updateTask,
+    updateHabit,
+    listTransactions,
+    updateTransaction,
+    updateGoal,
+    updateOccasion,
+    updatePerson,
+    updateJournal,
+    prepareDelete,
+    confirmDelete,
+    listTrash,
+    restoreDeleted,
     focusTool,
     qadaTool,
     goalsTool,
