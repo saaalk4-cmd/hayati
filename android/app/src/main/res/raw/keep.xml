@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- صوت إشعار حياتي بيتنادى بالاسم من Dart، فلازم shrinkResources ميشيلوش -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/hayati_chime,@raw/adhan" />

@@ -1,6 +1,6 @@
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/sound/sfx.dart';
 import '../../core/theme/app_colors.dart';
 import 'adhkar_data.dart';
 
@@ -20,10 +20,10 @@ class _AdhkarScreenState extends State<AdhkarScreen> {
 
   void _tap(int i) {
     if (_remaining[i] == 0) return;
-    HapticFeedback.lightImpact();
+    SoundFx.play(Sfx.tick);
     setState(() => _remaining[i]--);
     if (_remaining.every((r) => r == 0)) {
-      HapticFeedback.mediumImpact();
+      SoundFx.play(Sfx.milestone);
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('تقبّل الله منك 🌿')));
     }

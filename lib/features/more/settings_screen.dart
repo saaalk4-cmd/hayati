@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/sound/sfx.dart';
 import '../../data/session.dart';
 import '../../core/notifications.dart';
 import '../../core/widgets/palette_picker.dart';
@@ -103,6 +104,24 @@ class SettingsScreen extends ConsumerWidget {
               onSelectionChanged: (v) =>
                   ref.read(textScaleProvider.notifier).set(v.first),
             ),
+          ),
+          section('الأصوات'),
+          SwitchListTile(
+            secondary: const Icon(Icons.volume_up_outlined),
+            title: const Text('المؤثرات الصوتية'),
+            subtitle: const Text(
+              'أصوات هادية لما تخلّص حاجة (بتسكت لو الموبايل صامت)',
+            ),
+            value: ref.watch(soundSettingsProvider).sounds,
+            onChanged: (v) =>
+                ref.read(soundSettingsProvider.notifier).update(sounds: v),
+          ),
+          SwitchListTile(
+            secondary: const Icon(Icons.vibration),
+            title: const Text('الاهتزاز'),
+            value: ref.watch(soundSettingsProvider).haptics,
+            onChanged: (v) =>
+                ref.read(soundSettingsProvider.notifier).update(haptics: v),
           ),
           section('التنبيهات'),
           SwitchListTile(

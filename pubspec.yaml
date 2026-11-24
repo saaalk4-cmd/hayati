@@ -8,6 +8,7 @@ environment:
 
 dependencies:
   adhan: ^2.0.0+1
+  audioplayers: ^6.8.1
   cloud_firestore: ^7.2.0
   cloud_functions: ^7.1.0
   crypto: ^3.0.8
@@ -47,3 +48,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/brand/brand_mark.png
+    - assets/sounds/

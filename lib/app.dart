@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'core/sound/sfx.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/hayati_background.dart';
@@ -65,6 +66,7 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
         budget: next.$4,
       );
     }, fireImmediately: true);
+    ref.read(soundSettingsProvider); // يحمّل إعدادات الصوت
     // جدولة إشعارات الأذان للأيام الجاية
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AdhanNotifications.instance.reschedule(ref.read(prayerSettingsProvider));

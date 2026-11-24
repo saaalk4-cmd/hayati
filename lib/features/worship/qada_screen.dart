@@ -1,7 +1,7 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/sound/sfx.dart';
 import '../../core/theme/palettes.dart';
 import '../../core/widgets/motion.dart';
 import 'prayer_service.dart';
@@ -64,7 +64,7 @@ class QadaScreen extends ConsumerWidget {
           if (s.totalOwed > 0)
             FilledButton.icon(
               onPressed: () {
-                HapticFeedback.mediumImpact();
+                SoundFx.play(Sfx.done);
                 logQada(ref, s);
                 if (s.totalOwed <= 5) showCelebration(context);
               },
@@ -100,7 +100,7 @@ class QadaScreen extends ConsumerWidget {
                           onPressed: (s.owed[pr] ?? 0) == 0
                               ? null
                               : () {
-                                  HapticFeedback.lightImpact();
+                                  SoundFx.play(Sfx.tick);
                                   logQada(ref, s, prayer: pr);
                                 },
                           child: const Text('قضيتها'),

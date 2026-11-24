@@ -1,7 +1,7 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/sound/sfx.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_utils.dart';
 import '../../core/widgets/motion.dart';
@@ -40,13 +40,12 @@ class _TasbeehScreenState extends ConsumerState<TasbeehScreen> {
   int _pending = 0;
 
   void _tap() {
-    HapticFeedback.selectionClick();
+    SoundFx.play(Sfx.tick);
     setState(() {
       _count++;
       _pending++;
     });
     if (_count == _target) {
-      HapticFeedback.heavyImpact();
       showCelebration(context);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('أتممت $_target ✓ تقبّل الله')));

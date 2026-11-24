@@ -1,7 +1,7 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/sound/sfx.dart';
 import '../../core/utils/date_utils.dart';
 import 'money_models.dart';
 import 'money_repository.dart';
@@ -57,7 +57,7 @@ class _State extends ConsumerState<_AddTransactionSheet> {
             createdAt: DateTime.now(),
           ),
         );
-    HapticFeedback.lightImpact();
+    SoundFx.play(Sfx.coin);
     if (mounted) Navigator.pop(context);
   }
 

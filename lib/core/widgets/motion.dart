@@ -1,3 +1,5 @@
+import '../sound/sfx.dart';
+
 import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
@@ -107,6 +109,7 @@ class _PopOnChangeState extends State<PopOnChange>
 void showCelebration(BuildContext context) {
   final overlay = Overlay.maybeOf(context);
   if (overlay == null) return;
+  SoundFx.play(Sfx.celebrate);
   final palette = context.palette;
   late OverlayEntry entry;
   entry = OverlayEntry(

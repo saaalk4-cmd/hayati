@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/sound/sfx.dart';
 import '../../core/utils/date_utils.dart';
 import '../../core/widgets/motion.dart';
 import '../../data/task.dart';
@@ -25,7 +26,10 @@ class TaskTile extends ConsumerWidget {
           value: task.done,
           shape: const CircleBorder(),
           activeColor: scheme.primary,
-          onChanged: (_) => repo.toggle(task),
+          onChanged: (_) {
+            if (!task.done) SoundFx.play(Sfx.done);
+            repo.toggle(task);
+          },
         ),
       ),
       title: Text(

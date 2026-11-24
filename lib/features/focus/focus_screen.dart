@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../core/sound/sfx.dart';
 import '../../core/notifications.dart';
 import '../../core/theme/palettes.dart';
 import '../../core/utils/date_utils.dart';
@@ -87,7 +87,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
 
   Future<void> _finish() async {
     _ticker?.cancel();
-    HapticFeedback.heavyImpact();
+    SoundFx.play(Sfx.milestone);
     if (_phase == _Phase.focus) {
       await _logSession(_focusMin);
       if (mounted) showCelebration(context);

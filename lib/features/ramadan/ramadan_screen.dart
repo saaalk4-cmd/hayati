@@ -1,7 +1,7 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/sound/sfx.dart';
 import '../../core/theme/app_colors.dart';
 import '../worship/prayer_service.dart';
 import '../worship/prayer_settings.dart';
@@ -66,7 +66,7 @@ class RamadanScreen extends ConsumerWidget {
                   isToday: info.isRamadan && info.day == d,
                   future: !info.isRamadan || d > info.day,
                   onTap: () {
-                    HapticFeedback.lightImpact();
+                    SoundFx.play(Sfx.done);
                     setRamadanDay(
                       ref,
                       info.hijriYear,
@@ -75,7 +75,7 @@ class RamadanScreen extends ConsumerWidget {
                     );
                   },
                   onLongPress: () {
-                    HapticFeedback.mediumImpact();
+                    SoundFx.play(Sfx.done);
                     setRamadanDay(
                       ref,
                       info.hijriYear,
