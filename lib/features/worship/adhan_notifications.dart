@@ -18,14 +18,18 @@ class AdhanNotifications {
   static const _daysAhead = 4;
   static const _baseId = 1000;
 
-  static const _details = NotificationDetails(
+  /// كل صوت ليه قناة لوحده (أندرويد مبيغيّرش صوت قناة موجودة)
+  static NotificationDetails _details(AdhanSound sound) => NotificationDetails(
     android: AndroidNotificationDetails(
-      'adhan',
-      'الأذان',
+      sound == AdhanSound.system ? 'adhan' : 'adhan_${sound.name}',
+      sound == AdhanSound.system ? 'الأذان' : 'الأذان (${sound.label})',
       channelDescription: 'تنبيه بدخول وقت الصلاة',
       importance: Importance.max,
       priority: Priority.high,
       category: AndroidNotificationCategory.reminder,
+      sound: sound.raw == null
+          ? null
+          : RawResourceAndroidNotificationSound(sound.raw),
       actions: NotificationActions.prayerButtons,
     ),
   );
@@ -53,7 +57,7 @@ class AdhanNotifications {
           await _plugin.zonedSchedule(
             id: thisId,
             scheduledDate: tz.TZDateTime.from(time, tz.local),
-            notificationDetails: _details,
+            notificationDetails: _details(settings.adhanSound),
             androidScheduleMode: mode,
             title: 'حان الآن موعد صلاة ${p.ar}',
             body: '${formatPrayerTime(time)} • ${settings.placeLabel}',

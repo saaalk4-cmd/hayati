@@ -6,6 +6,20 @@ import '../../core/utils/date_utils.dart';
 import '../../data/session.dart';
 
 /// إعدادات المواقيت (محفوظة على الجهاز لأنها مرتبطة بمكانه)
+/// صوت الأذان: كامل، أو التكبير بس، أو صوت الموبايل
+/// (تسجيل CC0 من Wikimedia Commons، شوف docs/CREDITS.md)
+enum AdhanSound {
+  full('الأذان كامل', 'adhan'),
+  short('التكبير بس (25 ثانية)', 'adhan_short'),
+  system('صوت الموبايل العادي', null);
+
+  const AdhanSound(this.label, this.raw);
+  final String label;
+
+  /// اسم الملف في android res/raw
+  final String? raw;
+}
+
 class PrayerSettings {
   const PrayerSettings({
     required this.latitude,
@@ -17,6 +31,7 @@ class PrayerSettings {
     required this.hasRealLocation,
     this.offsets = const {},
     this.hijriAdjust = 0,
+    this.adhanSound = AdhanSound.full,
   });
 
   final double latitude;
@@ -35,6 +50,9 @@ class PrayerSettings {
   /// تعديل التاريخ الهجري بالأيام (±2) حسب رؤية الهلال في بلدك
   final int hijriAdjust;
 
+  /// صوت إشعار الأذان
+  final AdhanSound adhanSound;
+
   Coordinates get coordinates => Coordinates(latitude, longitude);
 
   CalculationParameters get parameters =>
@@ -50,6 +68,7 @@ class PrayerSettings {
     bool? hasRealLocation,
     Map<String, int>? offsets,
     int? hijriAdjust,
+    AdhanSound? adhanSound,
   }) => PrayerSettings(
     latitude: latitude ?? this.latitude,
     longitude: longitude ?? this.longitude,
@@ -60,6 +79,7 @@ class PrayerSettings {
     hasRealLocation: hasRealLocation ?? this.hasRealLocation,
     offsets: offsets ?? this.offsets,
     hijriAdjust: hijriAdjust ?? this.hijriAdjust,
+    adhanSound: adhanSound ?? this.adhanSound,
   );
 }
 
@@ -96,6 +116,10 @@ class PrayerSettingsController extends Notifier<PrayerSettings> {
           ? Madhab.hanafi
           : Madhab.shafi,
       adhanNotifications: prefs.getBool('${_p}adhan') ?? true,
+      adhanSound: AdhanSound.values.firstWhere(
+        (a) => a.name == prefs.getString('${_p}adhan_sound'),
+        orElse: () => AdhanSound.full,
+      ),
       hasRealLocation: prefs.getDouble('${_p}lat') != null,
       offsets: {
         for (final n in const ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'])
@@ -117,6 +141,7 @@ class PrayerSettingsController extends Notifier<PrayerSettings> {
     await prefs.setString('${_p}method', s.method.name);
     await prefs.setString('${_p}madhab', s.madhab.name);
     await prefs.setBool('${_p}adhan', s.adhanNotifications);
+    await prefs.setString('${_p}adhan_sound', s.adhanSound.name);
     for (final n in const ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']) {
       await prefs.setInt('${_p}off_$n', s.offsets[n] ?? 0);
     }
@@ -128,6 +153,8 @@ class PrayerSettingsController extends Notifier<PrayerSettings> {
       _save(state.copyWith(method: m));
   Future<void> setMadhab(Madhab m) => _save(state.copyWith(madhab: m));
   Future<void> setAdhan(bool v) => _save(state.copyWith(adhanNotifications: v));
+  Future<void> setAdhanSound(AdhanSound v) =>
+      _save(state.copyWith(adhanSound: v));
 
   Future<void> setOffset(String prayer, int minutes) => _save(
     state.copyWith(offsets: {...state.offsets, prayer: minutes.clamp(-30, 30)}),

@@ -70,6 +70,21 @@ class SoundFx {
     ),
   );
 
+  static AudioPlayer? _previewPlayer;
+
+  /// تجربة صوت (زي الأذان) من الإعدادات؛ دوسة تانية بتوقفه
+  static Future<void> preview(String file) async {
+    if (_inTest) return;
+    try {
+      final p = _previewPlayer ??= AudioPlayer();
+      if (p.state == PlayerState.playing) {
+        await p.stop();
+        return;
+      }
+      await p.play(AssetSource('sounds/$file'));
+    } catch (_) {}
+  }
+
   static Future<void> play(Sfx sfx, {bool haptic = true}) async {
     if (_inTest) return;
     if (haptic && settings.haptics) {

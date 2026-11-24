@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../core/notifications.dart';
+import '../../core/sound/sfx.dart';
 import '../reminders/smart_reminders.dart';
 import '../worship/prayer_settings.dart';
 
@@ -40,6 +41,43 @@ class NotificationSettingsScreen extends ConsumerWidget {
               await ref.read(prayerSettingsProvider.notifier).setAdhan(v);
             },
           ),
+          if (prayer.adhanNotifications)
+            ListTile(
+              leading: const Icon(Icons.music_note_outlined),
+              title: const Text('صوت الأذان'),
+              subtitle: Text(prayer.adhanSound.label),
+              trailing: IconButton(
+                tooltip: 'اسمع',
+                onPressed: () => SoundFx.preview('adhan_short.ogg'),
+                icon: const Icon(Icons.play_circle_outline),
+              ),
+              onTap: () async {
+                final v = await showModalBottomSheet<AdhanSound>(
+                  context: context,
+                  builder: (_) => SafeArea(
+                    child: RadioGroup<AdhanSound>(
+                      groupValue: prayer.adhanSound,
+                      onChanged: (v) => Navigator.pop(context, v),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final a in AdhanSound.values)
+                            RadioListTile<AdhanSound>(
+                              value: a,
+                              title: Text(a.label),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+                if (v != null) {
+                  await ref
+                      .read(prayerSettingsProvider.notifier)
+                      .setAdhanSound(v);
+                }
+              },
+            ),
           ListTile(
             leading: const Icon(Icons.timer_outlined),
             title: const Text('تنبيه قبل الصلاة'),
