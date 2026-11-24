@@ -25,6 +25,15 @@ class NotificationActions {
   static const snooze = 'snooze';
   static const prayed = 'prayed';
 
+  /// دوسة على الإشعار تفتح شاشة معيّنة
+  static String openPayload(String route) => jsonEncode({'r': route});
+
+  /// بيتحط من التطبيق: يفتح شاشة (go_router)
+  static void Function(String route)? openRoute;
+
+  /// شاشة مستنية التطبيق يفتح (لو الإشعار هو اللي فتحه)
+  static String? pendingRoute;
+
   static String taskPayload(String id) => jsonEncode({'t': 'task', 'id': id});
   static String habitPayload(String id) => jsonEncode({'t': 'habit', 'id': id});
   static String prayerPayload(String prayer, DateTime day) =>
@@ -57,12 +66,24 @@ Future<void> notificationActionBackground(NotificationResponse r) async {
 }
 
 Future<void> handleNotificationAction(NotificationResponse r) async {
-  final action = r.actionId;
-  if (action == null || action.isEmpty) return; // دوسة عادية: بتفتح التطبيق بس
   final Map<String, dynamic> p;
   try {
     p = (jsonDecode(r.payload ?? '{}') as Map).cast<String, dynamic>();
   } catch (_) {
+    return;
+  }
+  final action = r.actionId;
+  if (action == null || action.isEmpty) {
+    // دوسة عادية: لو الإشعار ليه شاشة نفتحها
+    final route = p['r'] as String?;
+    if (route != null) {
+      final open = NotificationActions.openRoute;
+      if (open != null) {
+        open(route);
+      } else {
+        NotificationActions.pendingRoute = route;
+      }
+    }
     return;
   }
 

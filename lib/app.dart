@@ -3,6 +3,10 @@ import 'package:material_ui/material_ui.dart';
 
 import 'data/local_collection.dart';
 import 'data/user_store.dart';
+import 'features/worship/prayer_log.dart';
+import 'core/utils/date_utils.dart';
+import 'core/notifications.dart';
+import 'core/notification_actions.dart';
 import 'core/sound/sfx.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -68,12 +72,49 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
       );
     }, fireImmediately: true);
     ref.read(soundSettingsProvider); // يحمّل إعدادات الصوت
+    // ملخص الليل: بيتحدث مع كل تغيير في بيانات النهارده
+    ref.listenManual(
+      _nightTextProvider,
+      (_, next) =>
+          SmartReminders.syncNight(ref.read(reminderSettingsProvider), next),
+      fireImmediately: true,
+    );
+    // دوسة على إشعار ليه شاشة (أذكار، قرآن...) تفتحها
+    NotificationActions.openRoute = (r) => ref.read(routerProvider).push(r);
+    _openLaunchNotification();
     // جدولة إشعارات الأذان للأيام الجاية
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AdhanNotifications.instance.reschedule(ref.read(prayerSettingsProvider));
       SmartReminders.syncFasting(ref.read(reminderSettingsProvider));
       SmartReminders.syncWeeklyReview(ref.read(reminderSettingsProvider));
+      SmartReminders.syncPrayerLinked(
+        ref.read(reminderSettingsProvider),
+        ref.read(prayerSettingsProvider),
+      );
+      SmartReminders.syncKahf(ref.read(reminderSettingsProvider));
     });
+  }
+
+  /// لو التطبيق اتفتح من دوسة على إشعار
+  Future<void> _openLaunchNotification() async {
+    final pending = NotificationActions.pendingRoute;
+    NotificationActions.pendingRoute = null;
+    if (pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => ref.read(routerProvider).push(pending),
+      );
+      return;
+    }
+    final n = AppNotifications.instance;
+    await n.init();
+    if (!n.ready) return;
+    final details = await n.plugin.getNotificationAppLaunchDetails();
+    final r = details?.notificationResponse;
+    if ((details?.didNotificationLaunchApp ?? false) && r != null) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => handleNotificationAction(r),
+      );
+    }
   }
 
   @override
@@ -98,6 +139,10 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
     if (state == AppLifecycleState.resumed) {
       lock.onResumed();
       _reloadLocalData();
+      SmartReminders.syncPrayerLinked(
+        ref.read(reminderSettingsProvider),
+        ref.read(prayerSettingsProvider),
+      );
       AdhanNotifications.instance.reschedule(ref.read(prayerSettingsProvider));
     }
   }
@@ -109,10 +154,10 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
     final textScale = ref.watch(textScaleProvider);
     final locked = ref.watch(lockProvider.select((s) => s.locked));
     final session = ref.watch(sessionProvider);
-    ref.listen(
-      prayerSettingsProvider,
-      (_, next) => AdhanNotifications.instance.reschedule(next),
-    );
+    ref.listen(prayerSettingsProvider, (_, next) {
+      AdhanNotifications.instance.reschedule(next);
+      SmartReminders.syncPrayerLinked(ref.read(reminderSettingsProvider), next);
+    });
     // مزامنة تذكيرات العادات والمهام مع البيانات
     ref.listen(habitsProvider, (_, next) {
       final v = next.value;
@@ -129,6 +174,9 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
     ref.listen(reminderSettingsProvider, (_, next) {
       SmartReminders.syncFasting(next);
       SmartReminders.syncWeeklyReview(next);
+      SmartReminders.syncPrayerLinked(next, ref.read(prayerSettingsProvider));
+      SmartReminders.syncKahf(next);
+      SmartReminders.syncNight(next, ref.read(_nightTextProvider));
     });
 
     return MaterialApp.router(
@@ -181,3 +229,21 @@ final _morningInputsProvider =
         ref.watch(moneySettingsProvider).value?.monthlyBudget,
       );
     });
+
+/// نص ملخص الليل من بيانات النهارده
+final _nightTextProvider = Provider<String>((ref) {
+  final now = DateTime.now();
+  final today = HayatiDates.dayKey(now);
+  final txs =
+      ref.watch(monthTransactionsProvider(monthKey(now))).value ?? const [];
+  final log = ref.watch(todayPrayerLogProvider);
+  return nightSummaryText(
+    day: now,
+    tasks: ref.watch(tasksProvider).value ?? const [],
+    habits: ref.watch(habitsProvider).value ?? const [],
+    prayersLogged: log.values.where((s) => s != PrayerStatus.missed).length,
+    spentToday: txs
+        .where((t) => t.date == today && t.type == TxType.expense)
+        .fold<double>(0, (a, t) => a + t.amount),
+  );
+});

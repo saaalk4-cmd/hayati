@@ -4,7 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../core/notification_actions.dart';
 import '../../core/notifications.dart';
+import '../worship/prayer_service.dart';
+import '../worship/prayer_settings.dart';
 import '../../core/utils/date_utils.dart';
 import '../../data/session.dart';
 import '../../data/task.dart';
@@ -19,6 +22,10 @@ class ReminderSettings {
     this.fastingMonThu = true,
     this.fastingWhiteDays = true,
     this.weeklyReview = true,
+    this.prePrayerMinutes = 0,
+    this.adhkar = true,
+    this.kahf = true,
+    this.nightSummary = true,
   });
   final bool morningSummary;
   final int morningHour;
@@ -27,6 +34,18 @@ class ReminderSettings {
 
   /// تذكير المراجعة الأسبوعية كل جمعة 8 بالليل
   final bool weeklyReview;
+
+  /// تنبيه قبل الصلاة بكام دقيقة (0 = مقفول)
+  final int prePrayerMinutes;
+
+  /// أذكار الصباح (بعد الفجر بنص ساعة) والمساء (بعد العصر بنص ساعة)
+  final bool adhkar;
+
+  /// سورة الكهف يوم الجمعة الصبح
+  final bool kahf;
+
+  /// ملخص اليوم الساعة 9:30 بالليل
+  final bool nightSummary;
 }
 
 class ReminderSettingsController extends Notifier<ReminderSettings> {
@@ -39,6 +58,10 @@ class ReminderSettingsController extends Notifier<ReminderSettings> {
       fastingMonThu: p.getBool('rem_fast_monthu') ?? true,
       fastingWhiteDays: p.getBool('rem_fast_white') ?? true,
       weeklyReview: p.getBool('rem_weekly_review') ?? true,
+      prePrayerMinutes: p.getInt('rem_pre_prayer') ?? 0,
+      adhkar: p.getBool('rem_adhkar') ?? true,
+      kahf: p.getBool('rem_kahf') ?? true,
+      nightSummary: p.getBool('rem_night') ?? true,
     );
   }
 
@@ -48,6 +71,10 @@ class ReminderSettingsController extends Notifier<ReminderSettings> {
     bool? monThu,
     bool? white,
     bool? review,
+    int? prePrayer,
+    bool? adhkar,
+    bool? kahf,
+    bool? night,
   }) async {
     final p = ref.read(sharedPrefsProvider);
     if (morning != null) await p.setBool('rem_morning', morning);
@@ -55,6 +82,10 @@ class ReminderSettingsController extends Notifier<ReminderSettings> {
     if (monThu != null) await p.setBool('rem_fast_monthu', monThu);
     if (white != null) await p.setBool('rem_fast_white', white);
     if (review != null) await p.setBool('rem_weekly_review', review);
+    if (prePrayer != null) await p.setInt('rem_pre_prayer', prePrayer);
+    if (adhkar != null) await p.setBool('rem_adhkar', adhkar);
+    if (kahf != null) await p.setBool('rem_kahf', kahf);
+    if (night != null) await p.setBool('rem_night', night);
     state = build();
   }
 }
@@ -91,6 +122,29 @@ String morningSummaryText({
     if (best != null && best.streak(day) > 1)
       '🔥 ${best.emoji} ${best.streak(day)} يوم',
     if (budget != null) 'فاضل ${formatMoney(budget - spentMonth)} من الميزانية',
+  ];
+  return parts.join(' • ');
+}
+
+/// نص ملخص الليل من بيانات النهارده
+String nightSummaryText({
+  required DateTime day,
+  required List<HayatiTask> tasks,
+  required List<Habit> habits,
+  required int prayersLogged,
+  required double spentToday,
+}) {
+  final key = HayatiDates.dayKey(day);
+  final left = tasks.where((t) => !t.done && t.dueDate == key).length;
+  final doneToday = tasks.where((t) => t.done && t.dueDate == key).length;
+  final todayHabits = habits.where((h) => h.isScheduled(day)).toList();
+  final habitsDone = todayHabits.where((h) => h.isDoneOn(day)).length;
+  final parts = <String>[
+    if (doneToday > 0) '✅ خلّصت $doneToday',
+    if (left > 0) 'فاضل $left لبكرة',
+    '🕌 $prayersLogged/5',
+    if (todayHabits.isNotEmpty) '🔥 $habitsDone/${todayHabits.length} عادات',
+    '💸 ${formatMoney(spentToday)}',
   ];
   return parts.join(' • ');
 }
@@ -150,6 +204,159 @@ class SmartReminders {
       at = DateTime(at.year, at.month, at.day + 1, 20);
     }
     return at;
+  }
+
+  static const _prePrayerBase = 5000200;
+  static const _adhkarBase = 5000300;
+  static const _kahfId = 5000060;
+  static const _nightId = 5000070;
+
+  /// قبل الصلاة + الأذكار: مربوطين بمواقيت الأيام الجاية
+  static Future<void> syncPrayerLinked(
+    ReminderSettings settings,
+    PrayerSettings prayer,
+  ) async {
+    final n = AppNotifications.instance;
+    await n.init();
+    if (!n.ready) return;
+    for (var i = 0; i < 20; i++) {
+      await n.plugin.cancel(id: _prePrayerBase + i);
+    }
+    for (var i = 0; i < 8; i++) {
+      await n.plugin.cancel(id: _adhkarBase + i);
+    }
+    final now = DateTime.now();
+    final mode = await n.scheduleMode();
+    Future<void> at(
+      int id,
+      DateTime when,
+      NotificationDetails d,
+      String title,
+      String body, [
+      String? payload,
+    ]) async {
+      if (!when.isAfter(now)) return;
+      try {
+        await n.plugin.zonedSchedule(
+          id: id,
+          scheduledDate: tz.TZDateTime.from(when, tz.local),
+          notificationDetails: d,
+          androidScheduleMode: mode,
+          title: title,
+          body: body,
+          payload: payload,
+        );
+      } catch (e) {
+        debugPrint('prayer-linked reminder failed: $e');
+      }
+    }
+
+    final pre = AppNotifications.channel(
+      'pre_prayer_v2',
+      'قبل الصلاة',
+      'تنبيه قبل دخول وقت الصلاة',
+    );
+    final adhkarCh = AppNotifications.channel(
+      'adhkar_v2',
+      'الأذكار',
+      'تذكير بأذكار الصباح والمساء',
+    );
+    for (var d = 0; d < 4; d++) {
+      final times = computePrayerTimes(prayer, now.add(Duration(days: d)));
+      if (settings.prePrayerMinutes > 0) {
+        for (final p in PrayerName.values) {
+          final when = times[p].subtract(
+            Duration(minutes: settings.prePrayerMinutes),
+          );
+          await at(
+            _prePrayerBase + d * 5 + p.index,
+            when,
+            pre,
+            '🕌 فاضل ${settings.prePrayerMinutes} دقايق على ${p.ar}',
+            'اتوضّى واستعد للصلاة ${formatPrayerTime(times[p])}',
+          );
+        }
+      }
+      if (settings.adhkar) {
+        await at(
+          _adhkarBase + d * 2,
+          times[PrayerName.fajr].add(const Duration(minutes: 30)),
+          adhkarCh,
+          '☀️ أذكار الصباح',
+          'دقيقتين تبدأ بيهم يومك',
+          NotificationActions.openPayload('/worship/adhkar/morning'),
+        );
+        await at(
+          _adhkarBase + d * 2 + 1,
+          times[PrayerName.asr].add(const Duration(minutes: 30)),
+          adhkarCh,
+          '🌙 أذكار المساء',
+          'متنساش أذكار المساء',
+          NotificationActions.openPayload('/worship/adhkar/evening'),
+        );
+      }
+    }
+  }
+
+  /// سورة الكهف كل جمعة الساعة 10 الصبح
+  static Future<void> syncKahf(ReminderSettings settings) async {
+    final n = AppNotifications.instance;
+    await n.init();
+    if (!n.ready) return;
+    await n.plugin.cancel(id: _kahfId);
+    if (!settings.kahf) return;
+    var at = DateTime.now();
+    at = DateTime(at.year, at.month, at.day, 10);
+    while (at.weekday != DateTime.friday || !at.isAfter(DateTime.now())) {
+      at = DateTime(at.year, at.month, at.day + 1, 10);
+    }
+    try {
+      await n.plugin.zonedSchedule(
+        id: _kahfId,
+        scheduledDate: tz.TZDateTime.from(at, tz.local),
+        notificationDetails: AppNotifications.channel(
+          'kahf_v2',
+          'سورة الكهف',
+          'تذكير بقراءة سورة الكهف يوم الجمعة',
+        ),
+        androidScheduleMode: await n.scheduleMode(),
+        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        title: '📖 جمعة مباركة',
+        body: 'متنساش سورة الكهف النهارده',
+        payload: NotificationActions.openPayload('/worship/quran'),
+      );
+    } catch (e) {
+      debugPrint('kahf reminder failed: $e');
+    }
+  }
+
+  /// ملخص الليل 9:30 (بيتحدث كل ما البيانات تتغير)
+  static Future<void> syncNight(ReminderSettings settings, String text) async {
+    final n = AppNotifications.instance;
+    await n.init();
+    if (!n.ready) return;
+    await n.plugin.cancel(id: _nightId);
+    if (!settings.nightSummary) return;
+    final now = DateTime.now();
+    var at = DateTime(now.year, now.month, now.day, 21, 30);
+    if (!at.isAfter(now)) at = at.add(const Duration(days: 1));
+    try {
+      await n.plugin.zonedSchedule(
+        id: _nightId,
+        scheduledDate: tz.TZDateTime.from(at, tz.local),
+        notificationDetails: AppNotifications.channel(
+          'night_v2',
+          'ملخص الليل',
+          'ملخص يومك بالليل',
+        ),
+        androidScheduleMode: await n.scheduleMode(),
+        title: '🌙 يومك في سطر',
+        body: text,
+        payload: NotificationActions.openPayload('/today'),
+      );
+    } catch (e) {
+      debugPrint('night summary failed: $e');
+    }
   }
 
   static Future<void> syncWeeklyReview(ReminderSettings settings) async {

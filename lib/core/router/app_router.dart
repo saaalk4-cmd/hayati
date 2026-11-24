@@ -16,6 +16,7 @@ import '../../features/journal/journal_screen.dart';
 import '../../features/money/money_analytics.dart';
 import '../../features/money/money_screen.dart';
 import '../../features/more/more_screen.dart';
+import '../../features/more/notification_settings_screen.dart';
 import '../../features/more/settings_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
 import '../../features/ramadan/ramadan_screen.dart';
@@ -150,6 +151,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'settings',
                     builder: (_, _) => const SettingsScreen(),
+                    routes: [
+                      GoRoute(
+                        path: 'notifications',
+                        builder: (_, _) => const NotificationSettingsScreen(),
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: 'habits',

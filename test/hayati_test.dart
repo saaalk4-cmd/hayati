@@ -835,4 +835,27 @@ void main() {
     expect(isReviewTime(DateTime(2026, 11, 28)), isTrue);
     expect(isReviewTime(DateTime(2026, 11, 23)), isFalse);
   });
+
+  test('ملخص الليل', () {
+    final day = DateTime(2026, 11, 24);
+    final t = nightSummaryText(
+      day: day,
+      tasks: [
+        HayatiTask(
+          id: '1',
+          title: 'أ',
+          done: true,
+          dueDate: '2026-11-24',
+          createdAt: day,
+        ),
+        HayatiTask(id: '2', title: 'ب', dueDate: '2026-11-24', createdAt: day),
+      ],
+      habits: const [],
+      prayersLogged: 4,
+      spentToday: 120,
+    );
+    expect(t, contains('خلّصت 1'));
+    expect(t, contains('فاضل 1'));
+    expect(t, contains('4/5'));
+  });
 }
