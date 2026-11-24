@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/graphics.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_utils.dart';
 import '../lock/lock_service.dart';
@@ -83,7 +84,7 @@ class _JournalScreenState extends ConsumerState<JournalScreen> {
         label: const Text('اكتب النهارده'),
       ),
       body: entries.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkeletonList(),
         error: (_, _) => const Center(child: Text('تعذّر التحميل')),
         data: (list) {
           final memories = onThisDay(list, DateTime.now());

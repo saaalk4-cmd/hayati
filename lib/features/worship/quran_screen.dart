@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/graphics.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/motion.dart';
 import 'quran_progress.dart';
@@ -17,7 +18,7 @@ class QuranScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('وِردي من القرآن')),
       body: async.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkeletonList(),
         error: (_, _) => const Center(child: Text('تعذّر التحميل')),
         data: (q) {
           final goalDone = q.todayPages >= q.dailyGoal;

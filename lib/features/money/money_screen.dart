@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import '../../core/widgets/graphics.dart';
 import '../../core/theme/app_colors.dart';
 import 'add_transaction_sheet.dart';
 import 'money_models.dart';
@@ -64,7 +65,7 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
         child: const Icon(Icons.add),
       ),
       body: txs.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => const SkeletonList(),
         error: (_, _) => const Center(child: Text('تعذّر التحميل')),
         data: (list) {
           final s = MonthSummary(list);
@@ -244,16 +245,44 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'صرفت الشهر ده',
-            style: text.bodyMedium?.copyWith(color: Colors.white70),
-          ),
-          Text(
-            formatMoney(summary.spent),
-            style: text.headlineMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'صرفت الشهر ده',
+                      style: text.bodyMedium?.copyWith(color: Colors.white70),
+                    ),
+                    CountUp(
+                      value: summary.spent,
+                      format: formatMoney,
+                      style: text.headlineMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (ratio != null)
+                ProgressRing(
+                  value: ratio,
+                  size: 64,
+                  stroke: 6,
+                  colors: over
+                      ? const [Color(0xFFFF8A80), Color(0xFFFF5252)]
+                      : null,
+                  child: Text(
+                    '${(ratio * 100).round()}%',
+                    style: text.labelLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 12),
           if (ratio != null) ...[

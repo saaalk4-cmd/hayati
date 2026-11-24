@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/graphics.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_utils.dart';
 import '../../core/widgets/section_card.dart';
@@ -226,6 +227,14 @@ class NextPrayerHero extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final next = ref.watch(nextPrayerProvider);
     final now = ref.watch(minuteClockProvider).value ?? DateTime.now();
+    final times = ref.watch(todayPrayerTimesProvider);
+    final phase = skyPhaseFor(
+      now,
+      fajr: times[PrayerName.fajr],
+      sunrise: times.sunrise,
+      asr: times[PrayerName.asr],
+      maghrib: times[PrayerName.maghrib],
+    );
     final text = Theme.of(context).textTheme;
     return Container(
       padding: EdgeInsets.all(compact ? 16 : 20),
@@ -245,7 +254,7 @@ class NextPrayerHero extends ConsumerWidget {
         children: [
           Row(
             children: [
-              const _CrescentMark(),
+              SkyMark(phase: phase),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -395,39 +404,6 @@ class PrayerChecklist extends ConsumerWidget {
 }
 
 /// هلال ذهبي ونجمتين (نفس روح شعار التطبيق وتصميم Canva)
-class _CrescentMark extends StatelessWidget {
-  const _CrescentMark();
-
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox(
-      width: 56,
-      height: 56,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Icon(
-              Icons.nightlight_round,
-              color: AppColors.gold500,
-              size: 48,
-            ),
-          ),
-          Positioned(
-            top: 2,
-            left: 2,
-            child: Icon(Icons.star_rounded, color: AppColors.gold200, size: 14),
-          ),
-          Positioned(
-            top: 16,
-            left: 0,
-            child: Icon(Icons.star_rounded, color: AppColors.gold200, size: 9),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 String _qadaLine(QadaState? q) {
   if (q == null || q.totalOwed == 0) return 'تابع الصلوات الفايتة وقضاها';
   return 'فاضل ${q.totalOwed} صلاة';

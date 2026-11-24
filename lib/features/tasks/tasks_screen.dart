@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/graphics.dart';
 import '../../core/utils/date_utils.dart';
 import '../../data/task.dart';
 import '../../data/tasks_repository.dart';
@@ -94,7 +95,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           ),
           Expanded(
             child: tasks.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const SkeletonList(),
               error: (e, _) => const Center(child: Text('تعذّر تحميل المهام')),
               data: (all) {
                 final list = all

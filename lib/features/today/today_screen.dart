@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/widgets/graphics.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_utils.dart';
 import '../../core/widgets/section_card.dart';
@@ -390,10 +391,15 @@ class _HabitsCard extends ConsumerWidget {
       title: 'عادات النهارده',
       trailing: habits.isEmpty
           ? null
-          : Text(
-              '$done/${habits.length}',
-              style: Theme.of(context).textTheme.labelLarge
-                  ?.copyWith(color: AppColors.gold700),
+          : ProgressRing(
+              value: done / habits.length,
+              size: 40,
+              stroke: 4,
+              child: Text(
+                '$done/${habits.length}',
+                style: Theme.of(context).textTheme.labelSmall
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
             ),
       onTap: () => context.push('/more/habits'),
       child: habits.isEmpty
@@ -433,8 +439,9 @@ class _MoneyCard extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Text(
-            formatMoney(spentToday),
+          CountUp(
+            value: spentToday,
+            format: formatMoney,
             style: Theme.of(context).textTheme.headlineSmall
                 ?.copyWith(fontWeight: FontWeight.w800),
           ),
@@ -536,7 +543,7 @@ class _PlanMyDayButton extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
-              Text('خطة ذكية من Claude', style: TextStyle(fontSize: 12)),
+              Text('ملخص يومك في ثانية', style: TextStyle(fontSize: 12)),
               Icon(Icons.chevron_left),
             ],
           ),
