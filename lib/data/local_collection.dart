@@ -20,6 +20,9 @@ class LocalJsonCollection<T> {
 
   static final _changes = StreamController<String>.broadcast();
 
+  /// بعد ما بيانات اتكتبت من برّه (زرار في إشعار): نخلّي الشاشات تقرا من جديد
+  static void refreshAll(Iterable<String> keys) => keys.forEach(_changes.add);
+
   Map<String, T> read() {
     final raw = prefs.getString(key);
     if (raw == null) return {};

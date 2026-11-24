@@ -120,7 +120,7 @@ class _FocusScreenState extends ConsumerState<FocusScreen> {
         id: _notifId,
         scheduledDate: tz.TZDateTime.from(_endsAt!, tz.local),
         notificationDetails: AppNotifications.channel(
-          'focus',
+          'focus_v2',
           'وضع التركيز',
           'انتهاء جلسة التركيز',
         ),

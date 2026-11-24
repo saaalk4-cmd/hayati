@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'data/local_collection.dart';
+import 'data/user_store.dart';
 import 'core/sound/sfx.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
@@ -20,7 +22,6 @@ import 'features/money/money_screen.dart';
 import 'features/reminders/smart_reminders.dart';
 import 'features/tasks/task_reminders.dart';
 import 'data/task.dart';
-import 'data/user_store.dart';
 import 'data/tasks_repository.dart';
 import 'features/habits/habit.dart';
 import 'features/worship/adhan_notifications.dart';
@@ -81,12 +82,22 @@ class _HayatiAppState extends ConsumerState<HayatiApp>
     super.dispose();
   }
 
+  /// لو زرار في إشعار كتب بيانات الضيف والتطبيق في الخلفية: نقرا من جديد
+  Future<void> _reloadLocalData() async {
+    final prefs = ref.read(sharedPrefsProvider);
+    await prefs.reload();
+    final keys = prefs.getKeys();
+    LocalJsonCollection.refreshAll(keys);
+    LocalUserStore.refreshAll(keys);
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final lock = ref.read(lockProvider.notifier);
     if (state == AppLifecycleState.paused) lock.onPaused();
     if (state == AppLifecycleState.resumed) {
       lock.onResumed();
+      _reloadLocalData();
       AdhanNotifications.instance.reschedule(ref.read(prayerSettingsProvider));
     }
   }

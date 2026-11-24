@@ -166,7 +166,7 @@ class SmartReminders {
           tz.local,
         ),
         notificationDetails: AppNotifications.channel(
-          'weekly_review',
+          'weekly_review_v2',
           'المراجعة الأسبوعية',
           'تذكير كل جمعة تراجع أسبوعك',
         ),
@@ -200,7 +200,7 @@ class SmartReminders {
         id: _morningId,
         scheduledDate: tz.TZDateTime.from(at, tz.local),
         notificationDetails: AppNotifications.channel(
-          'morning',
+          'morning_v2',
           'ملخص الصبح',
           'ملخص يومك كل صباح',
         ),
@@ -232,7 +232,7 @@ class SmartReminders {
       whiteDays: settings.fastingWhiteDays,
     );
     final details = AppNotifications.channel(
-      'fasting',
+      'fasting_v2',
       'تذكير الصيام',
       'تذكير بصيام الاتنين والخميس والأيام البيض',
     );

@@ -14,7 +14,7 @@ class OccasionReminders {
     await n.init();
     if (!n.ready) return;
     final details = AppNotifications.channel(
-      'occasions',
+      'occasions_v2',
       'المناسبات',
       'تذكير بأعياد الميلاد والمناسبات',
     );

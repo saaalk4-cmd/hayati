@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app.dart';
 import 'core/config/app_config.dart';
+import 'core/notification_actions.dart';
 import 'data/session.dart';
 
 Future<void> main() async {
@@ -27,13 +28,16 @@ Future<void> main() async {
 
   final prefs = await SharedPreferences.getInstance();
 
+  final container = ProviderContainer(
+    overrides: [
+      firebaseReadyProvider.overrideWithValue(firebaseReady),
+      sharedPrefsProvider.overrideWithValue(prefs),
+    ],
+  );
+  // أزرار الإشعارات وهو مفتوح بتكتب في نفس البيانات اللي الشاشات بتعرضها
+  NotificationActions.appContainer = container;
+
   runApp(
-    ProviderScope(
-      overrides: [
-        firebaseReadyProvider.overrideWithValue(firebaseReady),
-        sharedPrefsProvider.overrideWithValue(prefs),
-      ],
-      child: const HayatiApp(),
-    ),
+    UncontrolledProviderScope(container: container, child: const HayatiApp()),
   );
 }

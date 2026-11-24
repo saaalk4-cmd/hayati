@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../core/notification_actions.dart';
 import '../../core/notifications.dart';
 import 'habit.dart';
 
@@ -18,9 +19,10 @@ class HabitReminders {
     if (!n.ready) return;
     final wanted = <int>{};
     final details = AppNotifications.channel(
-      'habits',
+      'habits_v2',
       'تذكير العادات',
       'تذكير بعاداتك اليومية',
+      actions: NotificationActions.habitButtons,
     );
     final mode = await n.scheduleMode();
 
@@ -41,6 +43,7 @@ class HabitReminders {
             androidScheduleMode: mode,
             title: '${h.emoji} ${h.title}',
             body: 'متنساش عادتك النهارده 💪',
+            payload: NotificationActions.habitPayload(h.id),
             matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
           );
         } catch (e) {

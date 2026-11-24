@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../core/notification_actions.dart';
 import '../../core/notifications.dart';
 import '../../data/task.dart';
 
@@ -14,9 +15,10 @@ class TaskReminders {
     if (!n.ready) return;
     final now = DateTime.now();
     final details = AppNotifications.channel(
-      'tasks',
+      'tasks_v2',
       'تذكير المهام',
       'تذكير بمواعيد مهامك',
+      actions: NotificationActions.taskButtons,
     );
     final mode = await n.scheduleMode();
     final wanted = <int>{};
@@ -34,6 +36,7 @@ class TaskReminders {
           androidScheduleMode: mode,
           title: '⏰ ${t.title}',
           body: t.notes ?? 'معاد المهمة دي دلوقتي',
+          payload: NotificationActions.taskPayload(t.id),
         );
       } catch (e) {
         debugPrint('task reminder failed: $e');

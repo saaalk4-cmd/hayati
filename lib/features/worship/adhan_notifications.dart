@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../core/notification_actions.dart';
 import '../../core/notifications.dart';
 
 import 'prayer_service.dart';
@@ -25,6 +26,7 @@ class AdhanNotifications {
       importance: Importance.max,
       priority: Priority.high,
       category: AndroidNotificationCategory.reminder,
+      actions: NotificationActions.prayerButtons,
     ),
   );
 
@@ -55,6 +57,7 @@ class AdhanNotifications {
             androidScheduleMode: mode,
             title: 'حان الآن موعد صلاة ${p.ar}',
             body: '${formatPrayerTime(time)} • ${settings.placeLabel}',
+            payload: NotificationActions.prayerPayload(p.name, time),
           );
         } catch (e) {
           debugPrint('schedule failed: $e');

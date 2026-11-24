@@ -4,6 +4,8 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'notification_actions.dart';
+
 /// خدمة الإشعارات المشتركة (الأذان، العادات، تذكير المهام)
 class AppNotifications {
   AppNotifications._();
@@ -24,6 +26,9 @@ class AppNotifications {
         settings: const InitializationSettings(
           android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         ),
+        onDidReceiveNotificationResponse: handleNotificationAction,
+        onDidReceiveBackgroundNotificationResponse:
+            notificationActionBackground,
       );
       ready = true;
     } catch (e) {
@@ -52,16 +57,27 @@ class AppNotifications {
         : AndroidScheduleMode.inexactAllowWhileIdle;
   }
 
-  static NotificationDetails channel(String id, String name, String desc) =>
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          id,
-          name,
-          channelDescription: desc,
-          importance: Importance.high,
-          priority: Priority.high,
-        ),
-      );
+  /// صوت إشعار حياتي (android/app/src/main/res/raw/hayati_chime.wav)
+  static const chime = RawResourceAndroidNotificationSound('hayati_chime');
+
+  /// القنوات بصوت حياتي ليها «_v2» في الآخر (أندرويد مبيغيّرش صوت قناة موجودة)
+  static NotificationDetails channel(
+    String id,
+    String name,
+    String desc, {
+    List<AndroidNotificationAction>? actions,
+    bool chimeSound = true,
+  }) => NotificationDetails(
+    android: AndroidNotificationDetails(
+      id,
+      name,
+      channelDescription: desc,
+      importance: Importance.high,
+      priority: Priority.high,
+      sound: chimeSound ? chime : null,
+      actions: actions,
+    ),
+  );
 
   /// معرّف رقمي ثابت من نص (للعادات والمهام)
   static int idFor(String prefix, String key, int base) =>

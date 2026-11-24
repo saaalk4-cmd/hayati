@@ -46,6 +46,9 @@ class LocalUserStore implements UserStore {
   final SharedPreferences prefs;
   static final _changes = StreamController<String>.broadcast();
 
+  /// بعد ما بيانات اتكتبت من برّه (زرار في إشعار): نخلّي الشاشات تقرا من جديد
+  static void refreshAll(Iterable<String> keys) => keys.forEach(_changes.add);
+
   String _key(String c, String d) => 'store/$c/$d';
 
   Map<String, dynamic>? _read(String key) {
